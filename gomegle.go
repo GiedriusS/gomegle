@@ -25,10 +25,14 @@ type Status int
 
 type omegle_err struct {
 	err string
+	buf string
 }
 
 func (e *omegle_err) Error() string {
-	return "Omegle: " + e.err
+	if e.buf == "" {
+		return "Omegle: " + e.err
+	}
+	return "Omegle (" + e.buf + "): " + e.err
 }
 
 type Omegle struct {
@@ -51,7 +55,7 @@ func (o *Omegle) GetID() (err error) {
 
 func (o *Omegle) ShowTyping() (err error) {
 	if o.id == "" {
-		return &omegle_err{"id is empty"}
+		return &omegle_err{"id is empty", ""}
 	}
 	url, err := url.Parse(TYPING_URL + "&id=" + o.id)
 	if err != nil {
@@ -67,10 +71,10 @@ func (o *Omegle) ShowTyping() (err error) {
 
 func (o *Omegle) SendMessage(msg string) (err error) {
 	if o.id == "" {
-		return &omegle_err{"id is empty"}
+		return &omegle_err{"id is empty", ""}
 	}
 	if msg == "" {
-		return &omegle_err{"msg is empty"}
+		return &omegle_err{"msg is empty", ""}
 	}
 	url, err := url.Parse(SEND_URL + "&id=" + o.id + "&msg=" + msg)
 	if err != nil {
@@ -86,7 +90,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 
 func (o *Omegle) UpdateStatus() (st Status, msg string, err error) {
 	if o.id == "" {
-		return 0, "", &omegle_err{"id is empty"}
+		return 0, "", &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
 	data.Set("id", o.id)
@@ -102,10 +106,6 @@ func (o *Omegle) UpdateStatus() (st Status, msg string, err error) {
 	}
 
 	ret := string(body)
-	/*
-		   XXX: Make proper parsing of output returned by omegle
-	            Make use of threads here somehow for asynchronous operation
-	*/
 	switch {
 	case strings.Contains(ret, "waiting"):
 		return WAITING, "", nil
@@ -119,5 +119,5 @@ func (o *Omegle) UpdateStatus() (st Status, msg string, err error) {
 		return MESSAGE, ret[16 : len(ret)-3], nil
 	}
 
-	return ERROR, "", &omegle_err{"Unknown error"}
+	return ERROR, "", &omegle_err{"Unknown error", ret}
 }
