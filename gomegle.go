@@ -1,9 +1,11 @@
 package gomegle
 
-import "net/http"
-import "net/url"
-import "io/ioutil"
-import "strings"
+import (
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
+)
 
 const (
 	START_URL  = "http://omegle.com/start"
@@ -39,17 +41,45 @@ type Omegle struct {
 	id string
 }
 
-func (o *Omegle) GetID() (err error) {
-	resp, err := http.Get(START_URL)
+func get_request(link string, parameters []string, values []string) (body string, err error) {
+	client := &http.Client{}
+
+	u, err := url.Parse(link)
 	if err != nil {
-		return err
+		return "", err
+	}
+
+	query := u.Query()
+	for i, _ := range parameters {
+		query.Set(parameters[i], values[i])
+	}
+	u.RawQuery = query.Encode()
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+
+	ret, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(ret), nil
+}
+
+func (o *Omegle) GetID() (err error) {
+	resp, err := get_request(START_URL, nil, nil)
 	if err != nil {
 		return err
 	}
-	o.id = strings.Trim(string(body), "\"")
+	o.id = strings.Trim(string(resp), "\"")
 	return nil
 }
 
@@ -57,15 +87,10 @@ func (o *Omegle) ShowTyping() (err error) {
 	if o.id == "" {
 		return &omegle_err{"id is empty", ""}
 	}
-	url, err := url.Parse(TYPING_URL + "&id=" + o.id)
+	_, err = get_request(TYPING_URL, []string{"id"}, []string{o.id})
 	if err != nil {
 		return err
 	}
-	resp, err := http.Get(url.String())
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
 	return nil
 }
 
@@ -76,16 +101,8 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	if msg == "" {
 		return &omegle_err{"msg is empty", ""}
 	}
-	url, err := url.Parse(SEND_URL + "&id=" + o.id + "&msg=" + msg)
-	if err != nil {
-		return err
-	}
-	resp, err := http.Get(url.String())
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return nil
+	_, err = get_request(SEND_URL, []string{"id", "msg"}, []string{o.id, msg})
+	return err
 }
 
 func (o *Omegle) UpdateStatus() (st Status, msg string, err error) {
