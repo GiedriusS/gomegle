@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -21,6 +22,7 @@ const (
 	TYPING
 	MESSAGE
 	ERROR
+	STOPPEDTYPING
 )
 
 type Status int
@@ -105,36 +107,63 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	return err
 }
 
-func (o *Omegle) UpdateStatus() (st Status, msg string, err error) {
+func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 	if o.id == "" {
-		return 0, "", &omegle_err{"id is empty", ""}
+		return []Status{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
 	data.Set("id", o.id)
 	resp, err := http.PostForm(EVENT_URL, data)
 	if err != nil {
-		return ERROR, "", err
+		return []Status{ERROR}, []string{""}, err
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return ERROR, "", err
+		return []Status{ERROR}, []string{""}, err
 	}
 
 	ret := string(body)
-	switch {
-	case strings.Contains(ret, "waiting"):
-		return WAITING, "", nil
-	case strings.Contains(ret, "strangerDisconnected"):
-		return DISCONNECTED, "", nil
-	case strings.Contains(ret, "connected"):
-		return CONNECTED, "", nil
-	case strings.Contains(ret, "typing"):
-		return TYPING, "", nil
-	case strings.Contains(ret, "gotMessage"):
-		return MESSAGE, ret[16 : len(ret)-3], nil
+	re := regexp.MustCompile(`\[("[^"]*",?)*\]`)
+	all := re.FindAllString(ret, -1)
+
+	for _, v := range all {
+		switch {
+		case strings.Contains(v, "waiting"):
+			st = append(st, WAITING)
+			msg = append(msg, "")
+		case strings.Contains(v, "strangerDisconnected"):
+			st = append(st, DISCONNECTED)
+			msg = append(msg, "")
+		case strings.Contains(v, "connected"):
+			st = append(st, CONNECTED)
+			msg = append(msg, "")
+		case strings.Contains(v, "stoppedTyping"):
+			st = append(st, STOPPEDTYPING)
+			msg = append(msg, "")
+		case strings.Contains(v, "typing"):
+			st = append(st, TYPING)
+			msg = append(msg, "")
+		case strings.Contains(v, "gotMessage"):
+			re_msg := regexp.MustCompile(`"[^"]*"`)
+			all_msgs := re_msg.FindAllString(v, -1)
+			for index, message := range all_msgs {
+				if index == 0 {
+					continue
+				}
+				message = strings.Trim(message, "\"")
+				st = append(st, MESSAGE)
+				msg = append(msg, message)
+			}
+		}
+	}
+	if len(st) != 0 {
+		return st, msg, nil
 	}
 
-	return ERROR, "", &omegle_err{"Unknown error", ret}
+	st = append(st, ERROR)
+	msg = append(msg, "")
+
+	return st, msg, &omegle_err{"Unknown error", ret}
 }

@@ -1,10 +1,12 @@
 package main
 
-import "bufio"
-import "github.com/GiedriusS/gomegle"
-import "fmt"
-import "log"
-import "os"
+import (
+	"bufio"
+	"fmt"
+	"github.com/GiedriusS/gomegle"
+	"log"
+	"os"
+)
 
 func main() {
 	var o gomegle.Omegle
@@ -19,24 +21,26 @@ func main() {
 			log.Fatal(err)
 		}
 
-		switch st {
-		case gomegle.WAITING:
-			fmt.Println("Waiting...")
-			continue
-		case gomegle.CONNECTED:
-			fmt.Println("Connected...")
-		case gomegle.DISCONNECTED:
-			fmt.Println("Disconnected...")
-			ret := o.GetID()
-			if ret != nil {
-				log.Fatal(ret)
+		for i, _ := range st {
+			switch st[i] {
+			case gomegle.WAITING:
+				fmt.Println("Waiting...")
+			case gomegle.CONNECTED:
+				fmt.Println("Connected...")
+				o.SendMessage("v20")
+			case gomegle.DISCONNECTED:
+				fmt.Println("Disconnected...")
+				ret := o.GetID()
+				if ret != nil {
+					log.Fatal(ret)
+				}
+			case gomegle.TYPING:
+				fmt.Println("Stranger is typing")
+			case gomegle.MESSAGE:
+				fmt.Printf("%s\n", msg[i])
+			case gomegle.STOPPEDTYPING:
+				fmt.Println("Stranger stopped typing")
 			}
-			continue
-		case gomegle.TYPING:
-			fmt.Println("Stranger is typing")
-			continue
-		case gomegle.MESSAGE:
-			fmt.Printf("%s\n", msg)
 		}
 
 		err = o.ShowTyping()
