@@ -40,7 +40,10 @@ func (e *omegle_err) Error() string {
 }
 
 type Omegle struct {
-	id string
+	id     string   /* Mandatory, ID used for communication */
+	Lang   string   /* Optional, two character language code */
+	Group  string   /* Optional, "unmon" to join unmonitored chat */
+	topics []string /* Optional, in default mode a list of topics that interest you */
 }
 
 func get_request(link string, parameters []string, values []string) (body string, err error) {
@@ -77,7 +80,7 @@ func get_request(link string, parameters []string, values []string) (body string
 }
 
 func (o *Omegle) GetID() (err error) {
-	resp, err := get_request(START_URL, nil, nil)
+	resp, err := get_request(START_URL, []string{"lang", "group"}, []string{o.Lang, o.Group})
 	if err != nil {
 		return err
 	}
@@ -103,7 +106,14 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	if msg == "" {
 		return &omegle_err{"msg is empty", ""}
 	}
-	_, err = get_request(SEND_URL, []string{"id", "msg"}, []string{o.id, msg})
+	data := url.Values{}
+	data.Set("id", o.id)
+	data.Set("msg", msg)
+	resp, err := http.PostForm(SEND_URL, data)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
 	return err
 }
 

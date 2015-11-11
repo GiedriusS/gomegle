@@ -10,6 +10,8 @@ import (
 
 func main() {
 	var o gomegle.Omegle
+	o.Lang = "lt"
+
 	ret := o.GetID()
 	if ret != nil {
 		log.Fatal(ret)
