@@ -29,7 +29,6 @@ func main() {
 				fmt.Println("Waiting...")
 			case gomegle.CONNECTED:
 				fmt.Println("Connected...")
-				o.SendMessage("v20")
 			case gomegle.DISCONNECTED:
 				fmt.Println("Disconnected...")
 				ret := o.GetID()

@@ -40,10 +40,9 @@ func (e *omegle_err) Error() string {
 }
 
 type Omegle struct {
-	id     string   /* Mandatory, ID used for communication */
-	Lang   string   /* Optional, two character language code */
-	Group  string   /* Optional, "unmon" to join unmonitored chat */
-	topics []string /* Optional, in default mode a list of topics that interest you */
+	id    string /* Mandatory, ID used for communication */
+	Lang  string /* Optional, two character language code */
+	Group string /* Optional, "unmon" to join unmonitored chat */
 }
 
 func get_request(link string, parameters []string, values []string) (body string, err error) {
