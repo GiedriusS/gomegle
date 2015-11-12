@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	START_URL  = "http://omegle.com/start"
-	TYPING_URL = "http://omegle.com/typing"
-	SEND_URL   = "http://omegle.com/send"
-	EVENT_URL  = "http://omegle.com/events"
+	START_URL      = "http://omegle.com/start"
+	TYPING_URL     = "http://omegle.com/typing"
+	STOPTYPING_URL = "http://omegle.com/stoppedtyping"
+	SEND_URL       = "http://omegle.com/send"
+	EVENT_URL      = "http://omegle.com/events"
+	DISCONNECT_URL = "http://omegle.com/disconnect"
 )
 
 const (
@@ -23,6 +25,7 @@ const (
 	MESSAGE
 	ERROR
 	STOPPEDTYPING
+	NOEVENT
 )
 
 type Status int
@@ -91,11 +94,43 @@ func (o *Omegle) ShowTyping() (err error) {
 	if o.id == "" {
 		return &omegle_err{"id is empty", ""}
 	}
-	_, err = get_request(TYPING_URL, []string{"id"}, []string{o.id})
+	data := url.Values{}
+	data.Set("id", o.id)
+	resp, err := http.PostForm(TYPING_URL, data)
 	if err != nil {
 		return err
 	}
-	return nil
+	defer resp.Body.Close()
+	return err
+}
+
+func (o *Omegle) StopTyping() (err error) {
+	if o.id == "" {
+		return &omegle_err{"id is empty", ""}
+	}
+	data := url.Values{}
+	data.Set("id", o.id)
+	resp, err := http.PostForm(STOPTYPING_URL, data)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return err
+}
+
+func (o *Omegle) Disconnect() (err error) {
+	if o.id == "" {
+		return &omegle_err{"id is empty", ""}
+	}
+	data := url.Values{}
+	data.Set("id", o.id)
+	resp, err := http.PostForm(DISCONNECT_URL, data)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	o.id = ""
+	return err
 }
 
 func (o *Omegle) SendMessage(msg string) (err error) {
@@ -165,6 +200,9 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 				st = append(st, MESSAGE)
 				msg = append(msg, message)
 			}
+		case strings.Contains(v, "identDigests"):
+			st = append(st, NOEVENT)
+			msg = append(msg, "")
 		}
 	}
 	if len(st) != 0 {

@@ -8,14 +8,55 @@ import (
 	"os"
 )
 
+const (
+	LANG = "lt"
+	ASL  = "Labas. V20, o Tu?"
+)
+
+func messageListener(o *gomegle.Omegle) {
+	for {
+		err := o.ShowTyping()
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+
+		reader := bufio.NewReader(os.Stdin)
+		text, err := reader.ReadString('\n')
+		if err != nil {
+			err = o.Disconnect()
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = o.GetID()
+			if err != nil {
+				log.Fatal(err)
+			}
+			continue
+		}
+
+		err = o.StopTyping()
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+		err = o.SendMessage(text)
+		if err != nil {
+			log.Print(err)
+			continue
+		}
+	}
+}
+
 func main() {
 	var o gomegle.Omegle
-	o.Lang = "lt"
+	o.Lang = LANG
 
 	ret := o.GetID()
 	if ret != nil {
 		log.Fatal(ret)
 	}
+	go messageListener(&o)
 
 	for {
 		st, msg, err := o.UpdateStatus()
@@ -26,39 +67,23 @@ func main() {
 		for i, _ := range st {
 			switch st[i] {
 			case gomegle.WAITING:
-				fmt.Println("Waiting...")
+				fmt.Println("> Waiting...")
 			case gomegle.CONNECTED:
-				fmt.Println("Connected...")
+				fmt.Println("+ Connected...")
+				o.SendMessage(ASL)
 			case gomegle.DISCONNECTED:
-				fmt.Println("Disconnected...")
+				fmt.Println("- Disconnected...")
 				ret := o.GetID()
 				if ret != nil {
 					log.Fatal(ret)
 				}
 			case gomegle.TYPING:
-				fmt.Println("Stranger is typing")
+				fmt.Println("> Stranger is typing")
 			case gomegle.MESSAGE:
 				fmt.Printf("%s\n", msg[i])
 			case gomegle.STOPPEDTYPING:
-				fmt.Println("Stranger stopped typing")
+				fmt.Println("> Stranger stopped typing")
 			}
-		}
-
-		err = o.ShowTyping()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("> ")
-		text, err := reader.ReadString('\n')
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = o.SendMessage(text)
-		if err != nil {
-			log.Fatal(err)
 		}
 	}
 }
