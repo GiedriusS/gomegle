@@ -10,7 +10,7 @@ import (
 
 const (
 	LANG = "lt"
-	ASL  = "Labas. V20, o Tu?"
+	ASL  = "v20"
 )
 
 func messageListener(o *gomegle.Omegle) {
@@ -28,6 +28,7 @@ func messageListener(o *gomegle.Omegle) {
 			if err != nil {
 				log.Fatal(err)
 			}
+			fmt.Println("- Disconnected...")
 			continue
 		}
 

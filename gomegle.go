@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -233,6 +234,10 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 					continue
 				}
 				message = strings.Trim(message, "\"")
+				message, err = strconv.Unquote(`"` + message + `"`)
+				if err != nil {
+					continue
+				}
 				st = append(st, MESSAGE)
 				msg = append(msg, message)
 			}
