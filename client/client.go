@@ -28,10 +28,6 @@ func messageListener(o *gomegle.Omegle) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			err = o.GetID()
-			if err != nil {
-				log.Fatal(err)
-			}
 			continue
 		}
 
@@ -42,7 +38,7 @@ func messageListener(o *gomegle.Omegle) {
 		}
 		err = o.SendMessage(text)
 		if err != nil {
-			log.Print(err)
+			log.Fatal(err)
 			continue
 		}
 	}

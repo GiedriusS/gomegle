@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 const (
@@ -43,9 +44,23 @@ func (e *omegle_err) Error() string {
 }
 
 type Omegle struct {
-	id    string /* Mandatory, ID used for communication */
-	Lang  string /* Optional, two character language code */
-	Group string /* Optional, "unmon" to join unmonitored chat */
+	id    string     /* Mandatory, ID used for communication */
+	Lang  string     /* Optional, two character language code */
+	Group string     /* Optional, "unmon" to join unmonitored chat */
+	id_m  sync.Mutex /* Private member used for synchronising access to id */
+}
+
+func (o *Omegle) set_id(id string) {
+	o.id_m.Lock()
+	o.id = id
+	o.id_m.Unlock()
+}
+
+func (o *Omegle) get_id() (ret string) {
+	o.id_m.Lock()
+	ret = o.id
+	o.id_m.Unlock()
+	return ret
 }
 
 func get_request(link string, parameters []string, values []string) (body string, err error) {
@@ -81,12 +96,20 @@ func get_request(link string, parameters []string, values []string) (body string
 	return string(ret), nil
 }
 
-func (o *Omegle) GetID() (err error) {
+func (o *Omegle) getid_unlocked() (id string, err error) {
 	resp, err := get_request(START_URL, []string{"lang", "group"}, []string{o.Lang, o.Group})
+	if err != nil {
+		return "", err
+	}
+	return strings.Trim(string(resp), "\""), nil
+}
+
+func (o *Omegle) GetID() (err error) {
+	id, err := o.getid_unlocked()
 	if err != nil {
 		return err
 	}
-	o.id = strings.Trim(string(resp), "\"")
+	o.set_id(id)
 	return nil
 }
 
@@ -95,7 +118,7 @@ func (o *Omegle) ShowTyping() (err error) {
 		return &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
-	data.Set("id", o.id)
+	data.Set("id", o.get_id())
 	resp, err := http.PostForm(TYPING_URL, data)
 	if err != nil {
 		return err
@@ -109,7 +132,7 @@ func (o *Omegle) StopTyping() (err error) {
 		return &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
-	data.Set("id", o.id)
+	data.Set("id", o.get_id())
 	resp, err := http.PostForm(STOPTYPING_URL, data)
 	if err != nil {
 		return err
@@ -122,14 +145,22 @@ func (o *Omegle) Disconnect() (err error) {
 	if o.id == "" {
 		return &omegle_err{"id is empty", ""}
 	}
+	o.id_m.Lock()
 	data := url.Values{}
 	data.Set("id", o.id)
 	resp, err := http.PostForm(DISCONNECT_URL, data)
 	if err != nil {
+		o.id_m.Unlock()
 		return err
 	}
 	defer resp.Body.Close()
-	o.id = ""
+	id, err := o.getid_unlocked()
+	if err != nil {
+		o.id_m.Unlock()
+		return err
+	}
+	o.id = id
+	o.id_m.Unlock()
 	return err
 }
 
@@ -141,7 +172,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 		return &omegle_err{"msg is empty", ""}
 	}
 	data := url.Values{}
-	data.Set("id", o.id)
+	data.Set("id", o.get_id())
 	data.Set("msg", msg)
 	resp, err := http.PostForm(SEND_URL, data)
 	if err != nil {
@@ -156,20 +187,21 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 		return []Status{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
-	data.Set("id", o.id)
+	data.Set("id", o.get_id())
 	resp, err := http.PostForm(EVENT_URL, data)
 	if err != nil {
 		return []Status{ERROR}, []string{""}, err
 	}
 
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return []Status{ERROR}, []string{""}, err
 	}
 
 	ret := string(body)
-	if ret == "[]" {
+	if ret == "[]" || ret == "null" {
 		return []Status{}, []string{""}, nil
 	}
 
