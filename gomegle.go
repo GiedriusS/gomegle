@@ -169,6 +169,10 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 	}
 
 	ret := string(body)
+	if ret == "[]" {
+		return []Status{}, []string{""}, nil
+	}
+
 	re := regexp.MustCompile(`\[("[^"]*",?)*\]`)
 	all := re.FindAllString(ret, -1)
 
