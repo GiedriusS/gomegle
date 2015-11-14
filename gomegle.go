@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	START_URL      = "http://omegle.com/start"
-	TYPING_URL     = "http://omegle.com/typing"
-	STOPTYPING_URL = "http://omegle.com/stoppedtyping"
-	SEND_URL       = "http://omegle.com/send"
-	EVENT_URL      = "http://omegle.com/events"
-	DISCONNECT_URL = "http://omegle.com/disconnect"
+	START_URL      = "start"
+	TYPING_URL     = "typing"
+	STOPTYPING_URL = "stoppedtyping"
+	SEND_URL       = "send"
+	EVENT_URL      = "events"
+	DISCONNECT_URL = "disconnect"
 )
 
 const (
@@ -45,10 +45,19 @@ func (e *omegle_err) Error() string {
 }
 
 type Omegle struct {
-	id    string     /* Mandatory, ID used for communication */
-	Lang  string     /* Optional, two character language code */
-	Group string     /* Optional, "unmon" to join unmonitored chat */
-	id_m  sync.Mutex /* Private member used for synchronising access to id */
+	id     string     /* Mandatory, ID used for communication */
+	Lang   string     /* Optional, two character language code */
+	Group  string     /* Optional, "unmon" to join unmonitored chat */
+	Server string     /* Optional, can specify a certain server to use */
+	id_m   sync.Mutex /* Private member used for synchronising access to id */
+}
+
+func (o *Omegle) build_url(cmd string) string {
+	if o.Server == "" {
+		return "http://omegle.com/" + cmd
+	} else {
+		return "http://" + o.Server + ".omegle.com/" + cmd
+	}
 }
 
 func (o *Omegle) set_id(id string) {
@@ -98,7 +107,7 @@ func get_request(link string, parameters []string, values []string) (body string
 }
 
 func (o *Omegle) getid_unlocked() (id string, err error) {
-	resp, err := get_request(START_URL, []string{"lang", "group"}, []string{o.Lang, o.Group})
+	resp, err := get_request(o.build_url(START_URL), []string{"lang", "group"}, []string{o.Lang, o.Group})
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +129,7 @@ func (o *Omegle) ShowTyping() (err error) {
 	}
 	data := url.Values{}
 	data.Set("id", o.get_id())
-	resp, err := http.PostForm(TYPING_URL, data)
+	resp, err := http.PostForm(o.build_url(TYPING_URL), data)
 	if err != nil {
 		return err
 	}
@@ -134,7 +143,7 @@ func (o *Omegle) StopTyping() (err error) {
 	}
 	data := url.Values{}
 	data.Set("id", o.get_id())
-	resp, err := http.PostForm(STOPTYPING_URL, data)
+	resp, err := http.PostForm(o.build_url(STOPTYPING_URL), data)
 	if err != nil {
 		return err
 	}
@@ -149,7 +158,7 @@ func (o *Omegle) Disconnect() (err error) {
 	o.id_m.Lock()
 	data := url.Values{}
 	data.Set("id", o.id)
-	resp, err := http.PostForm(DISCONNECT_URL, data)
+	resp, err := http.PostForm(o.build_url(DISCONNECT_URL), data)
 	if err != nil {
 		o.id_m.Unlock()
 		return err
@@ -175,7 +184,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	data := url.Values{}
 	data.Set("id", o.get_id())
 	data.Set("msg", msg)
-	resp, err := http.PostForm(SEND_URL, data)
+	resp, err := http.PostForm(o.build_url(SEND_URL), data)
 	if err != nil {
 		return nil
 	}
@@ -189,7 +198,7 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 	}
 	data := url.Values{}
 	data.Set("id", o.get_id())
-	resp, err := http.PostForm(EVENT_URL, data)
+	resp, err := http.PostForm(o.build_url(EVENT_URL), data)
 	if err != nil {
 		return []Status{ERROR}, []string{""}, err
 	}
