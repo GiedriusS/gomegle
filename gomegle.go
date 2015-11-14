@@ -29,7 +29,7 @@ const (
 	MESSAGE
 	ERROR
 	STOPPEDTYPING
-	NOEVENT
+	IDENTDIGESTS
 	CONNECTIONDIED
 	ANTINUDEBANNED
 )
@@ -267,8 +267,17 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 				msg = append(msg, message)
 			}
 		case strings.Contains(v, "identDigests"):
-			st = append(st, NOEVENT)
-			msg = append(msg, "")
+			start := strings.Index(v, ",")
+			if start == -1 {
+				continue
+			}
+			start = start + 2
+			end := strings.LastIndex(v, "\"")
+			if end == -1 {
+				continue
+			}
+			msg = append(msg, v[start:end])
+			st = append(st, IDENTDIGESTS)
 		}
 	}
 	if len(st) != 0 {
