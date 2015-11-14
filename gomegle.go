@@ -19,6 +19,7 @@ const (
 	DISCONNECT_CMD = "disconnect"
 )
 
+/* These are the types of events UpdateStatus() will report */
 const (
 	WAITING = iota
 	CONNECTED
@@ -28,6 +29,8 @@ const (
 	ERROR
 	STOPPEDTYPING
 	NOEVENT
+	CONNECTIONDIED
+	ANTINUDEBANNED
 )
 
 type Status int
@@ -45,7 +48,7 @@ func (e *omegle_err) Error() string {
 }
 
 type Omegle struct {
-	id     string     /* Mandatory, ID used for communication */
+	id     string     /* Private member used for identifying ourselves to omegle */
 	Lang   string     /* Optional, two character language code */
 	Group  string     /* Optional, "unmon" to join unmonitored chat */
 	Server string     /* Optional, can specify a certain server to use */
@@ -221,6 +224,12 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 
 	for _, v := range all {
 		switch {
+		case strings.Contains(v, "antinudeBanned"):
+			st = append(st, ANTINUDEBANNED)
+			msg = append(msg, "")
+		case strings.Contains(v, "connectionDied"):
+			st = append(st, CONNECTIONDIED)
+			msg = append(msg, "")
 		case strings.Contains(v, "waiting"):
 			st = append(st, WAITING)
 			msg = append(msg, "")
