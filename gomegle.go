@@ -11,12 +11,12 @@ import (
 )
 
 const (
-	START_URL      = "start"
-	TYPING_URL     = "typing"
-	STOPTYPING_URL = "stoppedtyping"
-	SEND_URL       = "send"
-	EVENT_URL      = "events"
-	DISCONNECT_URL = "disconnect"
+	START_CMD      = "start"
+	TYPING_CMD     = "typing"
+	STOPTYPING_CMD = "stoppedtyping"
+	SEND_CMD       = "send"
+	EVENT_CMD      = "events"
+	DISCONNECT_CMD = "disconnect"
 )
 
 const (
@@ -107,7 +107,7 @@ func get_request(link string, parameters []string, values []string) (body string
 }
 
 func (o *Omegle) getid_unlocked() (id string, err error) {
-	resp, err := get_request(o.build_url(START_URL), []string{"lang", "group"}, []string{o.Lang, o.Group})
+	resp, err := get_request(o.build_url(START_CMD), []string{"lang", "group"}, []string{o.Lang, o.Group})
 	if err != nil {
 		return "", err
 	}
@@ -129,7 +129,7 @@ func (o *Omegle) ShowTyping() (err error) {
 	}
 	data := url.Values{}
 	data.Set("id", o.get_id())
-	resp, err := http.PostForm(o.build_url(TYPING_URL), data)
+	resp, err := http.PostForm(o.build_url(TYPING_CMD), data)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (o *Omegle) StopTyping() (err error) {
 	}
 	data := url.Values{}
 	data.Set("id", o.get_id())
-	resp, err := http.PostForm(o.build_url(STOPTYPING_URL), data)
+	resp, err := http.PostForm(o.build_url(STOPTYPING_CMD), data)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (o *Omegle) Disconnect() (err error) {
 	o.id_m.Lock()
 	data := url.Values{}
 	data.Set("id", o.id)
-	resp, err := http.PostForm(o.build_url(DISCONNECT_URL), data)
+	resp, err := http.PostForm(o.build_url(DISCONNECT_CMD), data)
 	if err != nil {
 		o.id_m.Unlock()
 		return err
@@ -184,7 +184,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	data := url.Values{}
 	data.Set("id", o.get_id())
 	data.Set("msg", msg)
-	resp, err := http.PostForm(o.build_url(SEND_URL), data)
+	resp, err := http.PostForm(o.build_url(SEND_CMD), data)
 	if err != nil {
 		return nil
 	}
@@ -198,7 +198,7 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 	}
 	data := url.Values{}
 	data.Set("id", o.get_id())
-	resp, err := http.PostForm(o.build_url(EVENT_URL), data)
+	resp, err := http.PostForm(o.build_url(EVENT_CMD), data)
 	if err != nil {
 		return []Status{ERROR}, []string{""}, err
 	}
