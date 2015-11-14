@@ -124,7 +124,7 @@ func (o *Omegle) GetID() (err error) {
 }
 
 func (o *Omegle) ShowTyping() (err error) {
-	if o.id == "" {
+	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
@@ -138,7 +138,7 @@ func (o *Omegle) ShowTyping() (err error) {
 }
 
 func (o *Omegle) StopTyping() (err error) {
-	if o.id == "" {
+	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
@@ -152,10 +152,11 @@ func (o *Omegle) StopTyping() (err error) {
 }
 
 func (o *Omegle) Disconnect() (err error) {
+	o.id_m.Lock()
 	if o.id == "" {
+		o.id_m.Unlock()
 		return &omegle_err{"id is empty", ""}
 	}
-	o.id_m.Lock()
 	data := url.Values{}
 	data.Set("id", o.id)
 	resp, err := http.PostForm(o.build_url(DISCONNECT_CMD), data)
@@ -171,11 +172,11 @@ func (o *Omegle) Disconnect() (err error) {
 	}
 	o.id = id
 	o.id_m.Unlock()
-	return err
+	return nil
 }
 
 func (o *Omegle) SendMessage(msg string) (err error) {
-	if o.id == "" {
+	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
 	if msg == "" {
@@ -189,11 +190,11 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 		return nil
 	}
 	defer resp.Body.Close()
-	return err
+	return nil
 }
 
 func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
-	if o.id == "" {
+	if o.get_id() == "" {
 		return []Status{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
 	}
 	data := url.Values{}
