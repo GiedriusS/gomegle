@@ -10,6 +10,7 @@ import (
 	"sync"
 )
 
+/* Command strings that are used by various functions */
 const (
 	START_CMD      = "start"
 	TYPING_CMD     = "typing"
@@ -33,13 +34,16 @@ const (
 	ANTINUDEBANNED
 )
 
+/* `Status' will only be used to store above constants */
 type Status int
 
+/* A private struct for storing errors */
 type omegle_err struct {
 	err string
 	buf string
 }
 
+/* Mandatory function to satisfy the interface */
 func (e *omegle_err) Error() string {
 	if e.buf == "" {
 		return "Omegle: " + e.err
@@ -47,6 +51,7 @@ func (e *omegle_err) Error() string {
 	return "Omegle (" + e.buf + "): " + e.err
 }
 
+/* Main struct representing connection to omegle */
 type Omegle struct {
 	id     string     /* Private member used for identifying ourselves to omegle */
 	Lang   string     /* Optional, two character language code */
@@ -55,6 +60,7 @@ type Omegle struct {
 	id_m   sync.Mutex /* Private member used for synchronising access to id */
 }
 
+/* Build a URL from o.Server and cmd used for communicating */
 func (o *Omegle) build_url(cmd string) string {
 	if o.Server == "" {
 		return "http://omegle.com/" + cmd
@@ -190,7 +196,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	data.Set("msg", msg)
 	resp, err := http.PostForm(o.build_url(SEND_CMD), data)
 	if err != nil {
-		return nil
+		return err
 	}
 	defer resp.Body.Close()
 	return nil
