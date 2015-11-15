@@ -80,6 +80,12 @@ func main() {
 				fmt.Printf("%s\n", msg[i])
 			case gomegle.STOPPEDTYPING:
 				fmt.Println("> Stranger stopped typing")
+			case gomegle.CONNECTIONDIED:
+				fmt.Println("- Error occured, disconnected...")
+				ret := o.GetID()
+				if ret != nil {
+					log.Fatal(ret)
+				}
 			}
 		}
 	}
