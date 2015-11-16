@@ -82,6 +82,24 @@ func (o *Omegle) get_id() (ret string) {
 	return ret
 }
 
+func post_request(link string, parameters []string, values []string) (body string, err error) {
+	data := url.Values{}
+	for i, _ := range parameters {
+		data.Set(parameters[i], values[i])
+	}
+	resp, err := http.PostForm(link, data)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	ret, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(ret), nil
+}
+
 func get_request(link string, parameters []string, values []string) (body string, err error) {
 	client := &http.Client{}
 
@@ -136,13 +154,10 @@ func (o *Omegle) ShowTyping() (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
-	data := url.Values{}
-	data.Set("id", o.get_id())
-	resp, err := http.PostForm(o.build_url(TYPING_CMD), data)
-	if err != nil {
-		return err
+	ret, err := post_request(o.build_url(TYPING_CMD), []string{"id"}, []string{o.get_id()})
+	if ret != "win" {
+		return &omegle_err{"ShowTyping() returned something other than win", ret}
 	}
-	defer resp.Body.Close()
 	return err
 }
 
@@ -150,13 +165,10 @@ func (o *Omegle) StopTyping() (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
-	data := url.Values{}
-	data.Set("id", o.get_id())
-	resp, err := http.PostForm(o.build_url(STOPTYPING_CMD), data)
-	if err != nil {
-		return err
+	ret, err := post_request(o.build_url(STOPTYPING_CMD), []string{"id"}, []string{o.get_id()})
+	if ret != "win" {
+		return &omegle_err{"StopTyping() returned something other than win", ret}
 	}
-	defer resp.Body.Close()
 	return err
 }
 
@@ -166,14 +178,16 @@ func (o *Omegle) Disconnect() (err error) {
 		o.id_m.Unlock()
 		return &omegle_err{"id is empty", ""}
 	}
-	data := url.Values{}
-	data.Set("id", o.id)
-	resp, err := http.PostForm(o.build_url(DISCONNECT_CMD), data)
+	ret, err := post_request(o.build_url(DISCONNECT_CMD), []string{"id"}, []string{o.id})
 	if err != nil {
 		o.id_m.Unlock()
 		return err
 	}
-	defer resp.Body.Close()
+	if ret != "win" {
+		o.id_m.Unlock()
+		return &omegle_err{"Disconnect() returned something other than win", ret}
+	}
+
 	id, err := o.getid_unlocked()
 	if err != nil {
 		o.id_m.Unlock()
@@ -191,14 +205,13 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	if msg == "" {
 		return &omegle_err{"msg is empty", ""}
 	}
-	data := url.Values{}
-	data.Set("id", o.get_id())
-	data.Set("msg", msg)
-	resp, err := http.PostForm(o.build_url(SEND_CMD), data)
+	ret, err := post_request(o.build_url(SEND_CMD), []string{"id", "msg"}, []string{o.get_id(), msg})
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	if ret != "win" {
+		return &omegle_err{"SendMessage() returned something else than win", ret}
+	}
 	return nil
 }
 
@@ -206,21 +219,10 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 	if o.get_id() == "" {
 		return []Status{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
 	}
-	data := url.Values{}
-	data.Set("id", o.get_id())
-	resp, err := http.PostForm(o.build_url(EVENT_CMD), data)
+	ret, err := post_request(o.build_url(EVENT_CMD), []string{"id"}, []string{o.get_id()})
 	if err != nil {
 		return []Status{ERROR}, []string{""}, err
 	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return []Status{ERROR}, []string{""}, err
-	}
-
-	ret := string(body)
 	if ret == "[]" || ret == "null" {
 		return []Status{}, []string{""}, nil
 	}
