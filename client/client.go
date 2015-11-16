@@ -6,6 +6,7 @@ import (
 	"github.com/GiedriusS/gomegle"
 	"log"
 	"os"
+	"time"
 )
 
 const (
@@ -86,6 +87,9 @@ func main() {
 				if ret != nil {
 					log.Fatal(ret)
 				}
+			case gomegle.ERROR:
+				fmt.Printf("- Error: %s (sleeping 500ms)\n", msg[i])
+				time.Sleep(500 * time.Millisecond)
 			}
 		}
 	}

@@ -221,7 +221,7 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 	}
 	ret, err := post_request(o.build_url(EVENT_CMD), []string{"id"}, []string{o.get_id()})
 	if err != nil {
-		return []Status{ERROR}, []string{""}, err
+		return []Status{}, []string{""}, err
 	}
 	if ret == "[]" || ret == "null" {
 		return []Status{}, []string{""}, nil
@@ -280,14 +280,23 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 			}
 			msg = append(msg, v[start:end])
 			st = append(st, IDENTDIGESTS)
+		case strings.Contains(v, "error"):
+			start := strings.Index(v, ",")
+			if start == -1 {
+				continue
+			}
+			start = start + 2
+			end := strings.LastIndex(v, "\"")
+			if end == -1 {
+				continue
+			}
+			msg = append(msg, v[start:end])
+			st = append(st, ERROR)
 		}
 	}
 	if len(st) != 0 {
 		return st, msg, nil
 	}
 
-	st = append(st, ERROR)
-	msg = append(msg, "")
-
-	return st, msg, &omegle_err{"Unknown error", ret}
+	return []Status{}, []string{}, &omegle_err{"Unknown error", ret}
 }
