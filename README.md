@@ -11,11 +11,11 @@ interaction with Omegle's chat
 |----------------------------|-------------|----------------|
 | /stoplookingforcommonlikes | no          | no             |
 | /generate                  | no          | no             |
-| /send                      | yes         | no             |
+| /send                      | yes         | yes            |
 | /status                    | not fully   |                |
-| /typing                    | yes         | no             |
-| /stoppedtyping             | yes         | no             |
-| /disconnect                | yes         | no             |
+| /typing                    | yes         | yes            |
+| /stoppedtyping             | yes         | yes            |
+| /disconnect                | yes         | yes            |
 | /events                    | not fully   | yes            |
 
 Some more features are missing from the table but they are kind of obscure so they will be implemented later.
