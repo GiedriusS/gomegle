@@ -261,6 +261,8 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 					continue
 				}
 				message = strings.Trim(message, "\"")
+				// WORKAROUND: strconv.Unquote throws up on "\/" so replace "\/" with "/" before
+				message = strings.Replace(message, "\\/", "/", -1)
 				message, err = strconv.Unquote(`"` + message + `"`)
 				if err != nil {
 					continue
