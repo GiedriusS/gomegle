@@ -70,15 +70,15 @@ func (o *Omegle) build_url(cmd string) string {
 }
 
 func (o *Omegle) set_id(id string) {
+	defer o.id_m.Unlock()
 	o.id_m.Lock()
 	o.id = id
-	o.id_m.Unlock()
 }
 
 func (o *Omegle) get_id() (ret string) {
+	defer o.id_m.Unlock()
 	o.id_m.Lock()
 	ret = o.id
-	o.id_m.Unlock()
 	return ret
 }
 
@@ -174,27 +174,23 @@ func (o *Omegle) StopTyping() (err error) {
 
 func (o *Omegle) Disconnect() (err error) {
 	o.id_m.Lock()
+	defer o.id_m.Unlock()
 	if o.id == "" {
-		o.id_m.Unlock()
 		return &omegle_err{"id is empty", ""}
 	}
 	ret, err := post_request(o.build_url(DISCONNECT_CMD), []string{"id"}, []string{o.id})
 	if err != nil {
-		o.id_m.Unlock()
 		return err
 	}
 	if ret != "win" {
-		o.id_m.Unlock()
 		return &omegle_err{"Disconnect() returned something other than win", ret}
 	}
 
 	id, err := o.getid_unlocked()
 	if err != nil {
-		o.id_m.Unlock()
 		return err
 	}
 	o.id = id
-	o.id_m.Unlock()
 	return nil
 }
 
