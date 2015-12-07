@@ -79,7 +79,7 @@ func (o *Omegle) get_id() (ret string) {
 	defer o.id_m.Unlock()
 	o.id_m.Lock()
 	ret = o.id
-	return ret
+	return
 }
 
 func post_request(link string, parameters []string, values []string) (body string, err error) {
