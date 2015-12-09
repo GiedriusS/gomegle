@@ -20,7 +20,7 @@ const (
 	DISCONNECT_CMD = "disconnect"
 )
 
-/* These are the types of events UpdateStatus() will report */
+/* These are the types of events UpdateEvents() will report */
 const (
 	WAITING = iota
 	CONNECTED
@@ -34,8 +34,8 @@ const (
 	ANTINUDEBANNED
 )
 
-/* `Status' will only be used to store above constants */
-type Status int
+/* `Event' will only be used to store above constants */
+type Event int
 
 /* A private struct for storing errors */
 type omegle_err struct {
@@ -75,10 +75,10 @@ func (o *Omegle) set_id(id string) {
 	o.id = id
 }
 
-func (o *Omegle) get_id() (ret string) {
+func (o *Omegle) get_id() (id string) {
 	defer o.id_m.Unlock()
 	o.id_m.Lock()
-	ret = o.id
+	id = o.id
 	return
 }
 
@@ -87,11 +87,13 @@ func post_request(link string, parameters []string, values []string) (body strin
 	for i, _ := range parameters {
 		data.Set(parameters[i], values[i])
 	}
+
 	resp, err := http.PostForm(link, data)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
 	ret, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
@@ -158,7 +160,7 @@ func (o *Omegle) ShowTyping() (err error) {
 	if ret != "win" {
 		return &omegle_err{"ShowTyping() returned something other than win", ret}
 	}
-	return err
+	return
 }
 
 func (o *Omegle) StopTyping() (err error) {
@@ -169,7 +171,7 @@ func (o *Omegle) StopTyping() (err error) {
 	if ret != "win" {
 		return &omegle_err{"StopTyping() returned something other than win", ret}
 	}
-	return err
+	return
 }
 
 func (o *Omegle) Disconnect() (err error) {
@@ -180,7 +182,7 @@ func (o *Omegle) Disconnect() (err error) {
 	}
 	ret, err := post_request(o.build_url(DISCONNECT_CMD), []string{"id"}, []string{o.id})
 	if err != nil {
-		return err
+		return
 	}
 	if ret != "win" {
 		return &omegle_err{"Disconnect() returned something other than win", ret}
@@ -188,7 +190,7 @@ func (o *Omegle) Disconnect() (err error) {
 
 	id, err := o.getid_unlocked()
 	if err != nil {
-		return err
+		return
 	}
 	o.id = id
 	return nil
@@ -203,7 +205,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	}
 	ret, err := post_request(o.build_url(SEND_CMD), []string{"id", "msg"}, []string{o.get_id(), msg})
 	if err != nil {
-		return err
+		return
 	}
 	if ret != "win" {
 		return &omegle_err{"SendMessage() returned something else than win", ret}
@@ -211,16 +213,17 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	return nil
 }
 
-func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
+func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 	if o.get_id() == "" {
-		return []Status{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
+		return []Event{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
 	}
+
 	ret, err := post_request(o.build_url(EVENT_CMD), []string{"id"}, []string{o.get_id()})
 	if err != nil {
-		return []Status{}, []string{""}, err
+		return []Event{}, []string{""}, err
 	}
 	if ret == "[]" || ret == "null" {
-		return []Status{}, []string{""}, nil
+		return []Event{}, []string{""}, nil
 	}
 
 	re := regexp.MustCompile(`\[("[^"]*",?)*\]`)
@@ -292,9 +295,10 @@ func (o *Omegle) UpdateStatus() (st []Status, msg []string, err error) {
 			st = append(st, ERROR)
 		}
 	}
+
 	if len(st) != 0 {
 		return st, msg, nil
 	}
 
-	return []Status{}, []string{}, &omegle_err{"Unknown error", ret}
+	return []Event{}, []string{}, &omegle_err{"Unknown error", ret}
 }

@@ -57,7 +57,7 @@ func main() {
 	go messageListener(&o)
 
 	for {
-		st, msg, err := o.UpdateStatus()
+		st, msg, err := o.UpdateEvents()
 		if err != nil {
 			log.Fatal(err)
 		}
