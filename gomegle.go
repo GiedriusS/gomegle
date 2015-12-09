@@ -213,6 +213,19 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	return nil
 }
 
+func extract_second_quote(st string) string {
+	start := strings.Index(st, ",")
+	if start == -1 {
+		return ""
+	}
+	start = start + 2
+	end := strings.LastIndex(st, "\"")
+	if end == -1 {
+		return ""
+	}
+	return st[start:end]
+}
+
 func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 	if o.get_id() == "" {
 		return []Event{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
@@ -237,6 +250,13 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 		case strings.Contains(v, "connectionDied"):
 			st = append(st, CONNECTIONDIED)
 			msg = append(msg, "")
+		case strings.Contains(v, "error"):
+			result := extract_second_quote(v)
+			if result == "" {
+				continue
+			}
+			msg = append(msg, result)
+			st = append(st, ERROR)
 		case strings.Contains(v, "waiting"):
 			st = append(st, WAITING)
 			msg = append(msg, "")
@@ -270,28 +290,18 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 				msg = append(msg, message)
 			}
 		case strings.Contains(v, "identDigests"):
-			start := strings.Index(v, ",")
-			if start == -1 {
+			result := extract_second_quote(v)
+			if result == "" {
 				continue
 			}
-			start = start + 2
-			end := strings.LastIndex(v, "\"")
-			if end == -1 {
-				continue
-			}
-			msg = append(msg, v[start:end])
+			msg = append(msg, result)
 			st = append(st, IDENTDIGESTS)
 		case strings.Contains(v, "error"):
-			start := strings.Index(v, ",")
-			if start == -1 {
+			result := extract_second_quote(v)
+			if result == "" {
 				continue
 			}
-			start = start + 2
-			end := strings.LastIndex(v, "\"")
-			if end == -1 {
-				continue
-			}
-			msg = append(msg, v[start:end])
+			msg = append(msg, result)
 			st = append(st, ERROR)
 		}
 	}
