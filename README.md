@@ -19,3 +19,6 @@ interaction with Omegle's chat
 | /events                    | not fully   | yes            |
 
 Some more features are missing from the table but they are kind of obscure so they will be implemented later.
+
+# Credits
+Part of this library is based on this awesome [document](https://gist.github.com/nucular/e19264af8d7fc8a26ece)
