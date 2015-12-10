@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-/* Command strings that are used by various functions */
+/* The commands to the omegle server used for various requests */
 const (
 	START_CMD      = "start"
 	TYPING_CMD     = "typing"
@@ -22,21 +22,21 @@ const (
 
 /* These are the types of events UpdateEvents() will report */
 const (
-	WAITING = iota
-	CONNECTED
-	DISCONNECTED
-	TYPING
-	MESSAGE
-	ERROR
-	STOPPEDTYPING
-	IDENTDIGESTS
-	CONNECTIONDIED
-	ANTINUDEBANNED
-	QUESTION
-	SPYTYPING
-	SPYSTOPPEDTYPING
-	SPYDISCONNECTED
-	SPYMESSAGE
+	WAITING          = iota /* Waiting we get connected to a stranger/spyee or other session */
+	CONNECTED               /* We were connected to a session */
+	DISCONNECTED            /* We were disconnected from a session */
+	TYPING                  /* Stranger is typing */
+	MESSAGE                 /* Got a message from a stranger */
+	ERROR                   /* Some kind of error occured */
+	STOPPEDTYPING           /* Stranger stopped typing */
+	IDENTDIGESTS            /* Identification of the session */
+	CONNECTIONDIED          /* The connection has died unfortunately due to some reason :( */
+	ANTINUDEBANNED          /* You were banned due to "bad behaviour" in the chat */
+	QUESTION                /* Question in a spyee/spyer session */
+	SPYTYPING               /* Spyee 1 or 2 is typing */
+	SPYSTOPPEDTYPING        /* Spyee 1 or 2 has stopped typing */
+	SPYDISCONNECTED         /* Spyee 1 or 2 has disconnected */
+	SPYMESSAGE              /* Spyee 1 or 2 has sent a message */
 )
 
 /* `Event' will only be used to store above constants */
@@ -45,7 +45,7 @@ type Event int
 /* A private struct for storing errors */
 type omegle_err struct {
 	err string
-	buf string
+	buf string /* Optional buffer to store the returned result */
 }
 
 /* Mandatory function to satisfy the interface */
@@ -144,20 +144,23 @@ func get_request(link string, parameters []string, values []string) (body string
 }
 
 func (o *Omegle) getid_unlocked() (id string, err error) {
-	wants_to_spy := "0"
-	cansavequestion := "0"
-	if o.Wantsspy == true {
-		wants_to_spy = "1"
-	}
+	params := []string{"lang", "group"}
+	args := []string{o.Lang, o.Group}
 
-	if wants_to_spy == "0" {
-		if o.Cansavequestion == true && o.Question != "" {
-			cansavequestion = "1"
+	if o.Wantsspy == true {
+		params = append(params, "wantsspy")
+		args = append(args, "1")
+	} else if o.Question != "" {
+		params = append(params, "ask")
+		args = append(args, o.Question)
+
+		if o.Cansavequestion == true {
+			params = append(params, "cansavequestion")
+			args = append(args, "1")
 		}
 	}
 
-	resp, err := get_request(o.build_url(START_CMD), []string{"lang", "group", "wantsspy", "ask", "cansavequestion"},
-		[]string{o.Lang, o.Group, wants_to_spy, o.Question, cansavequestion})
+	resp, err := get_request(o.build_url(START_CMD), params, args)
 	if err != nil {
 		return "", err
 	}
