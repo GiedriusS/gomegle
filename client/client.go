@@ -77,6 +77,20 @@ func main() {
 				}
 			case gomegle.TYPING:
 				fmt.Println("> Stranger is typing")
+			case gomegle.QUESTION:
+				fmt.Printf("> Question: %s\n", msg[i])
+			case gomegle.SPYTYPING:
+				fmt.Printf("> %s is typing\n", msg[i])
+			case gomegle.SPYSTOPPEDTYPING:
+				fmt.Printf("> %s stopped typing\n", msg[i])
+			case gomegle.SPYDISCONNECTED:
+				fmt.Printf("> %s disconnected\n", msg[i])
+				ret := o.GetID()
+				if ret != nil {
+					log.Fatal(ret)
+				}
+			case gomegle.SPYMESSAGE:
+				fmt.Printf("%s\n", msg[i])
 			case gomegle.MESSAGE:
 				fmt.Printf("%s\n", msg[i])
 			case gomegle.STOPPEDTYPING:

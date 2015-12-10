@@ -32,6 +32,11 @@ const (
 	IDENTDIGESTS
 	CONNECTIONDIED
 	ANTINUDEBANNED
+	QUESTION
+	SPYTYPING
+	SPYSTOPPEDTYPING
+	SPYDISCONNECTED
+	SPYMESSAGE
 )
 
 /* `Event' will only be used to store above constants */
@@ -53,11 +58,14 @@ func (e *omegle_err) Error() string {
 
 /* Main struct representing connection to omegle */
 type Omegle struct {
-	id     string     /* Private member used for identifying ourselves to omegle */
-	Lang   string     /* Optional, two character language code */
-	Group  string     /* Optional, "unmon" to join unmonitored chat */
-	Server string     /* Optional, can specify a certain server to use */
-	id_m   sync.Mutex /* Private member used for synchronising access to id */
+	id              string     /* Private member used for identifying ourselves to omegle */
+	Lang            string     /* Optional, two character language code */
+	Group           string     /* Optional, "unmon" to join unmonitored chat */
+	Server          string     /* Optional, can specify a certain server to use */
+	id_m            sync.Mutex /* Private member used for synchronising access to id */
+	Question        string     /* Optional, if not empty used as the question in "spyer" mode */
+	Cansavequestion bool       /* Optional, if question is not "" then permit omegle to save the question */
+	Wantsspy        bool       /* Optional, if true then "spyee" mode is started */
 }
 
 /* Build a URL from o.Server and cmd used for communicating */
@@ -136,7 +144,20 @@ func get_request(link string, parameters []string, values []string) (body string
 }
 
 func (o *Omegle) getid_unlocked() (id string, err error) {
-	resp, err := get_request(o.build_url(START_CMD), []string{"lang", "group"}, []string{o.Lang, o.Group})
+	wants_to_spy := "0"
+	cansavequestion := "0"
+	if o.Wantsspy == true {
+		wants_to_spy = "1"
+	}
+
+	if wants_to_spy == "0" {
+		if o.Cansavequestion == true && o.Question != "" {
+			cansavequestion = "1"
+		}
+	}
+
+	resp, err := get_request(o.build_url(START_CMD), []string{"lang", "group", "wantsspy", "ask", "cansavequestion"},
+		[]string{o.Lang, o.Group, wants_to_spy, o.Question, cansavequestion})
 	if err != nil {
 		return "", err
 	}
@@ -213,17 +234,15 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	return nil
 }
 
-func extract_second_quote(st string) string {
-	start := strings.Index(st, ",")
-	if start == -1 {
+func extract_quotes(st string, num int) string {
+	re := regexp.MustCompile(`"([^"]*)"`)
+	qts := re.FindAllString(st, -1)
+	if num-1 >= len(qts) {
 		return ""
 	}
-	start = start + 2
-	end := strings.LastIndex(st, "\"")
-	if end == -1 {
-		return ""
-	}
-	return st[start:end]
+	ret := qts[num-1]
+	ret = strings.Trim(ret, "\"")
+	return ret
 }
 
 func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
@@ -251,7 +270,7 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 			st = append(st, CONNECTIONDIED)
 			msg = append(msg, "")
 		case strings.Contains(v, "error"):
-			result := extract_second_quote(v)
+			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
@@ -260,6 +279,13 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 		case strings.Contains(v, "waiting"):
 			st = append(st, WAITING)
 			msg = append(msg, "")
+		case strings.Contains(v, "spyDisconnected"):
+			result := extract_quotes(v, 2)
+			if result == "" {
+				continue
+			}
+			msg = append(msg, result)
+			st = append(st, SPYDISCONNECTED)
 		case strings.Contains(v, "strangerDisconnected"):
 			st = append(st, DISCONNECTED)
 			msg = append(msg, "")
@@ -290,19 +316,47 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 				msg = append(msg, message)
 			}
 		case strings.Contains(v, "identDigests"):
-			result := extract_second_quote(v)
+			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
 			msg = append(msg, result)
 			st = append(st, IDENTDIGESTS)
 		case strings.Contains(v, "error"):
-			result := extract_second_quote(v)
+			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
 			msg = append(msg, result)
 			st = append(st, ERROR)
+		case strings.Contains(v, "question"):
+			result := extract_quotes(v, 2)
+			if result == "" {
+				continue
+			}
+			msg = append(msg, result)
+			st = append(st, QUESTION)
+		case strings.Contains(v, "spyTyping"):
+			result := extract_quotes(v, 2)
+			if result == "" {
+				continue
+			}
+			msg = append(msg, result)
+			st = append(st, SPYTYPING)
+		case strings.Contains(v, "spyStoppedTyping"):
+			result := extract_quotes(v, 2)
+			if result == "" {
+				continue
+			}
+			msg = append(msg, result)
+			st = append(st, SPYSTOPPEDTYPING)
+		case strings.Contains(v, "spyMessage"):
+			result := extract_quotes(v, 3)
+			if result == "" {
+				continue
+			}
+			msg = append(msg, result)
+			st = append(st, SPYMESSAGE)
 		}
 	}
 
