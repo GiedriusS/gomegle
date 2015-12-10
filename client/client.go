@@ -78,21 +78,21 @@ func main() {
 			case gomegle.TYPING:
 				fmt.Println("> Stranger is typing")
 			case gomegle.QUESTION:
-				fmt.Printf("> Question: %s\n", msg[i])
+				fmt.Printf("> Question: %s\n", msg[i][0])
 			case gomegle.SPYTYPING:
-				fmt.Printf("> %s is typing\n", msg[i])
+				fmt.Printf("> %s is typing\n", msg[i][0])
 			case gomegle.SPYSTOPPEDTYPING:
-				fmt.Printf("> %s stopped typing\n", msg[i])
+				fmt.Printf("> %s stopped typing\n", msg[i][0])
 			case gomegle.SPYDISCONNECTED:
-				fmt.Printf("> %s disconnected\n", msg[i])
+				fmt.Printf("> %s disconnected\n", msg[i][0])
 				ret := o.GetID()
 				if ret != nil {
 					log.Fatal(ret)
 				}
 			case gomegle.SPYMESSAGE:
-				fmt.Printf("%s\n", msg[i])
+				fmt.Printf("%s: %s\n", msg[i][0], msg[i][1])
 			case gomegle.MESSAGE:
-				fmt.Printf("%s\n", msg[i])
+				fmt.Printf("%s\n", msg[i][0])
 			case gomegle.STOPPEDTYPING:
 				fmt.Println("> Stranger stopped typing")
 			case gomegle.CONNECTIONDIED:
@@ -102,7 +102,7 @@ func main() {
 					log.Fatal(ret)
 				}
 			case gomegle.ERROR:
-				fmt.Printf("- Error: %s (sleeping 500ms)\n", msg[i])
+				fmt.Printf("- Error: %s (sleeping 500ms)\n", msg[i][0])
 				time.Sleep(500 * time.Millisecond)
 			}
 		}

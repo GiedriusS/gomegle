@@ -248,17 +248,17 @@ func extract_quotes(st string, num int) string {
 	return ret
 }
 
-func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
+func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	if o.get_id() == "" {
-		return []Event{ERROR}, []string{""}, &omegle_err{"id is empty", ""}
+		return []Event{ERROR}, [][]string{}, &omegle_err{"id is empty", ""}
 	}
 
 	ret, err := post_request(o.build_url(EVENT_CMD), []string{"id"}, []string{o.get_id()})
 	if err != nil {
-		return []Event{}, []string{""}, err
+		return []Event{}, [][]string{}, err
 	}
 	if ret == "[]" || ret == "null" {
-		return []Event{}, []string{""}, nil
+		return []Event{}, [][]string{}, nil
 	}
 
 	re := regexp.MustCompile(`\[("[^"]*",?)*\]`)
@@ -268,42 +268,43 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 		switch {
 		case strings.Contains(v, "antinudeBanned"):
 			st = append(st, ANTINUDEBANNED)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "connectionDied"):
 			st = append(st, CONNECTIONDIED)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "error"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, ERROR)
 		case strings.Contains(v, "waiting"):
 			st = append(st, WAITING)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "spyDisconnected"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, SPYDISCONNECTED)
 		case strings.Contains(v, "strangerDisconnected"):
 			st = append(st, DISCONNECTED)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "connected"):
 			st = append(st, CONNECTED)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "stoppedTyping"):
 			st = append(st, STOPPEDTYPING)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "typing"):
 			st = append(st, TYPING)
-			msg = append(msg, "")
+			msg = append(msg, []string{})
 		case strings.Contains(v, "gotMessage"):
 			re_msg := regexp.MustCompile(`"[^"]*"`)
 			all_msgs := re_msg.FindAllString(v, -1)
+			ap := []string{}
 			for index, message := range all_msgs {
 				if index == 0 {
 					continue
@@ -315,50 +316,52 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 				if err != nil {
 					continue
 				}
-				st = append(st, MESSAGE)
-				msg = append(msg, message)
+				ap = append(ap, message)
 			}
+			st = append(st, MESSAGE)
+			msg = append(msg, ap)
 		case strings.Contains(v, "identDigests"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, IDENTDIGESTS)
 		case strings.Contains(v, "error"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, ERROR)
 		case strings.Contains(v, "question"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, QUESTION)
 		case strings.Contains(v, "spyTyping"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, SPYTYPING)
 		case strings.Contains(v, "spyStoppedTyping"):
 			result := extract_quotes(v, 2)
 			if result == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{result})
 			st = append(st, SPYSTOPPEDTYPING)
 		case strings.Contains(v, "spyMessage"):
-			result := extract_quotes(v, 3)
-			if result == "" {
+			spy := extract_quotes(v, 2)
+			spy_msg := extract_quotes(v, 3)
+			if spy_msg == "" {
 				continue
 			}
-			msg = append(msg, result)
+			msg = append(msg, []string{spy, spy_msg})
 			st = append(st, SPYMESSAGE)
 		}
 	}
@@ -367,5 +370,5 @@ func (o *Omegle) UpdateEvents() (st []Event, msg []string, err error) {
 		return st, msg, nil
 	}
 
-	return []Event{}, []string{}, &omegle_err{"Unknown error", ret}
+	return []Event{}, [][]string{}, &omegle_err{"Unknown error", ret}
 }
