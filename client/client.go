@@ -30,6 +30,10 @@ func messageListener(o *gomegle.Omegle) {
 				log.Fatal(err)
 			}
 			fmt.Println("- Disconnected...")
+			ret := o.GetID()
+			if ret != nil {
+				log.Fatal(ret)
+			}
 			continue
 		}
 

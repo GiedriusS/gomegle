@@ -1,3 +1,4 @@
+// Package gomegle lets you interface with Omegle in Go
 package gomegle
 
 import (
@@ -10,7 +11,7 @@ import (
 	"sync"
 )
 
-/* The commands to the omegle server used for various requests */
+// Various commands sent to the omegle servers
 const (
 	START_CMD      = "start"
 	TYPING_CMD     = "typing"
@@ -20,35 +21,34 @@ const (
 	DISCONNECT_CMD = "disconnect"
 )
 
-/* These are the types of events UpdateEvents() will report */
+// Types of events UpdateEvents() will return
 const (
-	WAITING          = iota /* Waiting we get connected to a stranger/spyee or other session */
-	CONNECTED               /* We were connected to a session */
-	DISCONNECTED            /* We were disconnected from a session */
-	TYPING                  /* Stranger is typing */
-	MESSAGE                 /* Got a message from a stranger */
-	ERROR                   /* Some kind of error occured */
-	STOPPEDTYPING           /* Stranger stopped typing */
-	IDENTDIGESTS            /* Identification of the session */
-	CONNECTIONDIED          /* The connection has died unfortunately due to some reason :( */
-	ANTINUDEBANNED          /* You were banned due to "bad behaviour" in the chat */
-	QUESTION                /* Question in a spyee/spyer session */
-	SPYTYPING               /* Spyee 1 or 2 is typing */
-	SPYSTOPPEDTYPING        /* Spyee 1 or 2 has stopped typing */
-	SPYDISCONNECTED         /* Spyee 1 or 2 has disconnected */
-	SPYMESSAGE              /* Spyee 1 or 2 has sent a message */
+	WAITING          = iota // Waiting we get connected to a stranger/spyee or other session
+	CONNECTED               // We were connected to a session
+	DISCONNECTED            // We were disconnected from a session
+	TYPING                  // Stranger is typing
+	MESSAGE                 // Got a message from a stranger
+	ERROR                   // Some kind of error occured
+	STOPPEDTYPING           // Stranger stopped typing
+	IDENTDIGESTS            // Identification of the session
+	CONNECTIONDIED          // The connection has died unfortunately due to some reason :(
+	ANTINUDEBANNED          // You were banned due to "bad behaviour" in the chat
+	QUESTION                // Question in a spyee/spyer session
+	SPYTYPING               // Spyee 1 or 2 is typing
+	SPYSTOPPEDTYPING        // Spyee 1 or 2 has stopped typing
+	SPYDISCONNECTED         // Spyee 1 or 2 has disconnected
+	SPYMESSAGE              // Spyee 1 or 2 has sent a message
 )
 
-/* `Event' will only be used to store above constants */
-type Event int
+type Event int // A type used for storing only the above event codes
 
-/* A private struct for storing errors */
+// A private struct for storing errors
 type omegle_err struct {
 	err string
-	buf string /* Optional buffer to store the returned result */
+	buf string // Buffer that could be used to store the returned result
 }
 
-/* Mandatory function to satisfy the interface */
+// Mandatory function to satisfy the interface
 func (e *omegle_err) Error() string {
 	if e.buf == "" {
 		return "Omegle: " + e.err
@@ -56,19 +56,19 @@ func (e *omegle_err) Error() string {
 	return "Omegle (" + e.buf + "): " + e.err
 }
 
-/* Main struct representing connection to omegle */
+// Main struct that represents a connection to Omegle
 type Omegle struct {
-	id              string     /* Private member used for identifying ourselves to omegle */
-	Lang            string     /* Optional, two character language code */
-	Group           string     /* Optional, "unmon" to join unmonitored chat */
-	Server          string     /* Optional, can specify a certain server to use */
-	id_m            sync.Mutex /* Private member used for synchronising access to id */
-	Question        string     /* Optional, if not empty used as the question in "spyer" mode */
-	Cansavequestion bool       /* Optional, if question is not "" then permit omegle to save the question */
-	Wantsspy        bool       /* Optional, if true then "spyee" mode is started */
+	id              string     // Private member used for identifying ourselves to omegle
+	Lang            string     // Optional, two character language code
+	Group           string     // Optional, "unmon" to join unmonitored chat
+	Server          string     // Optional, can specify a certain server to use
+	id_m            sync.Mutex // Private member used for synchronising access to id
+	Question        string     // Optional, if not empty used as the question in "spyer" mode
+	Cansavequestion bool       // Optional, if question is not "" then permit omegle to save the question
+	Wantsspy        bool       // Optional, if true then "spyee" mode is started
 }
 
-/* Build a URL from o.Server and cmd used for communicating */
+// Build a URL from o.Server and cmd that will be used for communication
 func (o *Omegle) build_url(cmd string) string {
 	if o.Server == "" {
 		return "http://omegle.com/" + cmd
@@ -77,12 +77,14 @@ func (o *Omegle) build_url(cmd string) string {
 	}
 }
 
+// Change the id
 func (o *Omegle) set_id(id string) {
 	defer o.id_m.Unlock()
 	o.id_m.Lock()
 	o.id = id
 }
 
+// Get the id
 func (o *Omegle) get_id() (id string) {
 	defer o.id_m.Unlock()
 	o.id_m.Lock()
@@ -90,6 +92,7 @@ func (o *Omegle) get_id() (id string) {
 	return
 }
 
+// Send a POST request with specified parameters and values
 func post_request(link string, parameters []string, values []string) (body string, err error) {
 	data := url.Values{}
 	for i, _ := range parameters {
@@ -110,6 +113,7 @@ func post_request(link string, parameters []string, values []string) (body strin
 	return string(ret), nil
 }
 
+// Send a GET request with specified parameters and values
 func get_request(link string, parameters []string, values []string) (body string, err error) {
 	client := &http.Client{}
 
@@ -143,6 +147,7 @@ func get_request(link string, parameters []string, values []string) (body string
 	return string(ret), nil
 }
 
+// Get a new ID but without any locking
 func (o *Omegle) getid_unlocked() (id string, err error) {
 	params := []string{"lang", "group"}
 	args := []string{o.Lang, o.Group}
@@ -167,6 +172,7 @@ func (o *Omegle) getid_unlocked() (id string, err error) {
 	return strings.Trim(string(resp), "\""), nil
 }
 
+// Get and set a new id
 func (o *Omegle) GetID() (err error) {
 	id, err := o.getid_unlocked()
 	if err != nil {
@@ -176,6 +182,7 @@ func (o *Omegle) GetID() (err error) {
 	return nil
 }
 
+// Show to the stranger that we are typing
 func (o *Omegle) ShowTyping() (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
@@ -187,6 +194,7 @@ func (o *Omegle) ShowTyping() (err error) {
 	return
 }
 
+// Show to the stranger that we have stopped typing
 func (o *Omegle) StopTyping() (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
@@ -198,6 +206,7 @@ func (o *Omegle) StopTyping() (err error) {
 	return
 }
 
+// Disconnect from the Omegle server
 func (o *Omegle) Disconnect() (err error) {
 	o.id_m.Lock()
 	defer o.id_m.Unlock()
@@ -211,15 +220,10 @@ func (o *Omegle) Disconnect() (err error) {
 	if ret != "win" {
 		return &omegle_err{"Disconnect() returned something other than win", ret}
 	}
-
-	id, err := o.getid_unlocked()
-	if err != nil {
-		return
-	}
-	o.id = id
 	return nil
 }
 
+// Send a message
 func (o *Omegle) SendMessage(msg string) (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
@@ -237,6 +241,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	return nil
 }
 
+// Extract some quotes from the string
 func extract_quotes(st string, num int) string {
 	re := regexp.MustCompile(`"([^"]*)"`)
 	qts := re.FindAllString(st, -1)
@@ -248,6 +253,7 @@ func extract_quotes(st string, num int) string {
 	return ret
 }
 
+// Visit the events page and check for new events
 func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	if o.get_id() == "" {
 		return []Event{ERROR}, [][]string{}, &omegle_err{"id is empty", ""}
