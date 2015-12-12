@@ -130,6 +130,8 @@ func main() {
 				if ret != nil {
 					log.Fatal(ret)
 				}
+			case gomegle.SERVERMESSAGE:
+				fmt.Printf("%% %s\n", msg[i][0])
 			}
 		}
 	}

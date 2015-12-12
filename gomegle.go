@@ -273,7 +273,6 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 						messages = append(messages, str)
 					}
 				}
-				msg = append(msg, messages)
 				switch status {
 				case "antinudeBanned":
 					st = append(st, ANTINUDEBANNED)
@@ -305,7 +304,12 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 					st = append(st, SPYMESSAGE)
 				case "serverMessage":
 					st = append(st, SERVERMESSAGE)
+				case "question":
+					st = append(st, QUESTION)
+				default:
+					continue
 				}
+				msg = append(msg, messages)
 
 			}
 		}
