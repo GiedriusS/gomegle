@@ -126,6 +126,10 @@ func main() {
 			case gomegle.ERROR:
 				fmt.Printf("- Error: %s (sleeping 500ms)\n", msg[i][0])
 				time.Sleep(500 * time.Millisecond)
+				ret := o.GetID()
+				if ret != nil {
+					log.Fatal(ret)
+				}
 			}
 		}
 	}
