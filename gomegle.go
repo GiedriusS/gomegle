@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 )
@@ -39,6 +37,7 @@ const (
 	SPYSTOPPEDTYPING        // Spyee 1 or 2 has stopped typing
 	SPYDISCONNECTED         // Spyee 1 or 2 has disconnected
 	SPYMESSAGE              // Spyee 1 or 2 has sent a message
+	SERVERMESSAGE           // Some kind of server message
 )
 
 type Event int // A type used for storing only the above event codes
@@ -304,6 +303,8 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 					st = append(st, SPYSTOPPEDTYPING)
 				case "spyMessage":
 					st = append(st, SPYMESSAGE)
+				case "serverMessage":
+					st = append(st, SERVERMESSAGE)
 				}
 
 			}
