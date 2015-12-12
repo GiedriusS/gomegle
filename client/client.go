@@ -2,16 +2,12 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"github.com/GiedriusS/gomegle"
 	"log"
 	"os"
 	"time"
-)
-
-const (
-	LANG = "lt"
-	ASL  = "v20"
 )
 
 func messageListener(o *gomegle.Omegle) {
@@ -52,7 +48,27 @@ func messageListener(o *gomegle.Omegle) {
 
 func main() {
 	var o gomegle.Omegle
-	o.Lang = LANG
+	lang := flag.String("lang", "", "Two character language code for searching strangers that only speak that language")
+	group := flag.String("group", "", "Only search for strangers in this group (\"unmon\" for unmonitored chat")
+	server := flag.String("server", "", "Connect to this server to search for strangers")
+	question := flag.String("question", "", "If not empty then turn on \"spyer\" mode and use this question")
+	cansavequestion := flag.Bool("cansavequestion", false, "If true then in \"spyer\" mode omegle will be permitted to re-use your question")
+	wantsspy := flag.Bool("wantsspy", false, "If true then \"spyee\" mode is started")
+	asl := flag.String("asl", "", "If not empty then this message will be sent as soon as you start talking to a stranger")
+	flag.Parse()
+
+	if *server != "" {
+		o.Server = *server
+	}
+	if *question != "" {
+		o.Question = *question
+		o.Cansavequestion = *cansavequestion
+	} else if *wantsspy != false {
+		o.Wantsspy = *wantsspy
+	} else {
+		o.Lang = *lang
+		o.Group = *group
+	}
 
 	ret := o.GetID()
 	if ret != nil {
@@ -72,7 +88,9 @@ func main() {
 				fmt.Println("> Waiting...")
 			case gomegle.CONNECTED:
 				fmt.Println("+ Connected...")
-				o.SendMessage(ASL)
+				if *asl != "" && *question == "" && *wantsspy == false {
+					o.SendMessage(*asl)
+				}
 			case gomegle.DISCONNECTED:
 				fmt.Println("- Disconnected...")
 				ret := o.GetID()
