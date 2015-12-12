@@ -2,6 +2,7 @@
 package gomegle
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -241,18 +242,6 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	return nil
 }
 
-// Extract some quotes from the string
-func extract_quotes(st string, num int) string {
-	re := regexp.MustCompile(`"([^"]*)"`)
-	qts := re.FindAllString(st, -1)
-	if num-1 >= len(qts) {
-		return ""
-	}
-	ret := qts[num-1]
-	ret = strings.Trim(ret, "\"")
-	return ret
-}
-
 // Visit the events page and check for new events
 func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	if o.get_id() == "" {
@@ -267,109 +256,60 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 		return []Event{}, [][]string{}, nil
 	}
 
-	re := regexp.MustCompile(`\[("[^"]*",?)*\]`)
-	all := re.FindAllString(ret, -1)
+	var otpt interface{}
+	json.Unmarshal([]byte(ret), &otpt)
+	if oi, ok := otpt.([]interface{}); ok {
+		for _, v := range oi {
+			if sep_arr, ok := v.([]interface{}); ok {
+				status := ""
+				if str, ok := sep_arr[0].(string); ok {
+					status = str
+				}
+				if status == "" {
+					continue
+				}
+				messages := []string{}
+				for i := 1; i < len(sep_arr); i++ {
+					if str, ok := sep_arr[i].(string); ok {
+						messages = append(messages, str)
+					}
+				}
+				msg = append(msg, messages)
+				switch status {
+				case "antinudeBanned":
+					st = append(st, ANTINUDEBANNED)
+				case "connectionDied":
+					st = append(st, CONNECTIONDIED)
+				case "error":
+					st = append(st, ERROR)
+				case "waiting":
+					st = append(st, WAITING)
+				case "spyDisconnected":
+					st = append(st, SPYDISCONNECTED)
+				case "strangerDisconnected":
+					st = append(st, DISCONNECTED)
+				case "connected":
+					st = append(st, CONNECTED)
+				case "stoppedTyping":
+					st = append(st, STOPPEDTYPING)
+				case "typing":
+					st = append(st, TYPING)
+				case "gotMessage":
+					st = append(st, MESSAGE)
+				case "identDigests":
+					st = append(st, IDENTDIGESTS)
+				case "spyTyping":
+					st = append(st, SPYTYPING)
+				case "spyStoppedTyping":
+					st = append(st, SPYSTOPPEDTYPING)
+				case "spyMessage":
+					st = append(st, SPYMESSAGE)
+				}
 
-	for _, v := range all {
-		switch {
-		case strings.Contains(v, "antinudeBanned"):
-			st = append(st, ANTINUDEBANNED)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "connectionDied"):
-			st = append(st, CONNECTIONDIED)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "error"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
 			}
-			msg = append(msg, []string{result})
-			st = append(st, ERROR)
-		case strings.Contains(v, "waiting"):
-			st = append(st, WAITING)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "spyDisconnected"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
-			}
-			msg = append(msg, []string{result})
-			st = append(st, SPYDISCONNECTED)
-		case strings.Contains(v, "strangerDisconnected"):
-			st = append(st, DISCONNECTED)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "connected"):
-			st = append(st, CONNECTED)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "stoppedTyping"):
-			st = append(st, STOPPEDTYPING)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "typing"):
-			st = append(st, TYPING)
-			msg = append(msg, []string{})
-		case strings.Contains(v, "gotMessage"):
-			re_msg := regexp.MustCompile(`"[^"]*"`)
-			all_msgs := re_msg.FindAllString(v, -1)
-			ap := []string{}
-			for index, message := range all_msgs {
-				if index == 0 {
-					continue
-				}
-				message = strings.Trim(message, "\"")
-				// WORKAROUND: strconv.Unquote throws up on "\/" so replace "\/" with "/" before
-				message = strings.Replace(message, "\\/", "/", -1)
-				message, err = strconv.Unquote(`"` + message + `"`)
-				if err != nil {
-					continue
-				}
-				ap = append(ap, message)
-			}
-			st = append(st, MESSAGE)
-			msg = append(msg, ap)
-		case strings.Contains(v, "identDigests"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
-			}
-			msg = append(msg, []string{result})
-			st = append(st, IDENTDIGESTS)
-		case strings.Contains(v, "error"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
-			}
-			msg = append(msg, []string{result})
-			st = append(st, ERROR)
-		case strings.Contains(v, "question"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
-			}
-			msg = append(msg, []string{result})
-			st = append(st, QUESTION)
-		case strings.Contains(v, "spyTyping"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
-			}
-			msg = append(msg, []string{result})
-			st = append(st, SPYTYPING)
-		case strings.Contains(v, "spyStoppedTyping"):
-			result := extract_quotes(v, 2)
-			if result == "" {
-				continue
-			}
-			msg = append(msg, []string{result})
-			st = append(st, SPYSTOPPEDTYPING)
-		case strings.Contains(v, "spyMessage"):
-			spy := extract_quotes(v, 2)
-			spy_msg := extract_quotes(v, 3)
-			if spy_msg == "" {
-				continue
-			}
-			msg = append(msg, []string{spy, spy_msg})
-			st = append(st, SPYMESSAGE)
 		}
+	} else {
+		return []Event{}, [][]string{}, &omegle_err{"failed to unmarshal", ret}
 	}
 
 	if len(st) != 0 {
