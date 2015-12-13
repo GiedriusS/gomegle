@@ -92,8 +92,8 @@ func TestUpdateEvents(t *testing.T) {
 	if err == nil {
 		t.Error("UpdateEvents() should have returned an error")
 	}
-	if len(st) != 0 && (len(event) <= 1 && event[0] == ERROR) {
-		t.Error("st must be 0 length and any event returned must be error")
+	if len(st) != 0 || len(event) != 0 {
+		t.Error("st and event length must be 0")
 	}
 	err = o.GetID()
 	if err != nil {

@@ -244,7 +244,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 // Visit the events page and check for new events
 func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	if o.get_id() == "" {
-		return []Event{ERROR}, [][]string{}, &omegle_err{"id is empty", ""}
+		return []Event{}, [][]string{}, &omegle_err{"id is empty", ""}
 	}
 
 	ret, err := post_request(o.build_url(EVENT_CMD), []string{"id"}, []string{o.get_id()})
