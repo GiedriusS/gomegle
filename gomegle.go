@@ -88,9 +88,8 @@ type Status struct {
 func (o *Omegle) build_url(cmd string) string {
 	if o.Server == "" {
 		return "http://omegle.com/" + cmd
-	} else {
-		return "http://" + o.Server + ".omegle.com/" + cmd
 	}
+	return "http://" + o.Server + ".omegle.com/" + cmd
 }
 
 // Change the id
@@ -286,10 +285,13 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	}
 
 	var otpt interface{}
-	json.Unmarshal([]byte(ret), &otpt)
+	err = json.Unmarshal([]byte(ret), &otpt)
+	if err != nil {
+		return []Event{}, [][]string{}, err
+	}
 	data, ok := otpt.([]interface{})
 	if ok == false {
-		return []Event{}, [][]string{}, &omegle_err{"failed to unmarshal", ret}
+		return []Event{}, [][]string{}, &omegle_err{"invalid json (root element must be an array)", ret}
 	}
 
 	for _, dv := range data {
@@ -366,7 +368,10 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 		return Status{}, err
 	}
 	var otpt interface{}
-	json.Unmarshal([]byte(resp), &otpt)
+	err = json.Unmarshal([]byte(resp), &otpt)
+	if err != nil {
+		return Status{}, err
+	}
 	data, ok := otpt.(map[string]interface{})
 	if ok == false {
 		return Status{}, &omegle_err{"status didn't return an JSON object", resp}
