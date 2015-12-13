@@ -67,6 +67,7 @@ type Omegle struct {
 	Question        string     // Optional, if not empty used as the question in "spyer" mode
 	Cansavequestion bool       // Optional, if question is not "" then permit omegle to save the question
 	Wantsspy        bool       // Optional, if true then "spyee" mode is started
+	Topics          []string   // Optional, if not empty will look only for people interested in these topics
 }
 
 // Stores information about omegle status
@@ -177,6 +178,16 @@ func (o *Omegle) getid_unlocked() (id string, err error) {
 		if o.Cansavequestion == true {
 			params = append(params, "cansavequestion")
 			args = append(args, "1")
+		}
+	} else {
+		b, err := json.Marshal(o.Topics)
+		if err != nil {
+			return "", err
+		}
+		if len(o.Topics) != 0 {
+			topics := string(b)
+			params = append(params, "topics")
+			args = append(args, topics)
 		}
 	}
 
