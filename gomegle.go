@@ -12,13 +12,14 @@ import (
 
 // Various commands sent to the omegle servers
 const (
-	startCmd      = "start"
-	typingCmd     = "typing"
-	stoptypingCmd = "stoppedtyping"
-	sendCmd       = "send"
-	eventCmd      = "events"
-	disconnectCmd = "disconnect"
-	statusCmd     = "status"
+	startCmd                     = "start"
+	typingCmd                    = "typing"
+	stoptypingCmd                = "stoppedtyping"
+	sendCmd                      = "send"
+	eventCmd                     = "events"
+	disconnectCmd                = "disconnect"
+	statusCmd                    = "status"
+	stoplookingforcommonlikesCmd = "stoplookingforcommonlikes"
 )
 
 // Types of events UpdateEvents() will return
@@ -436,4 +437,22 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 		return st, &omegleErr{"failed to parse servers", resp}
 	}
 	return
+}
+
+// StopLookingForCommonLikes stops looking for strangers only interested in specified topics
+func (o *Omegle) StopLookingForCommonLikes() error {
+	if len(o.Topics) == 0 {
+		return &omegleErr{"topic list is empty", ""}
+	}
+	if o.getID() == "" {
+		return &omegleErr{"id is empty", ""}
+	}
+	resp, err := postRequest(o.buildURL(stoplookingforcommonlikesCmd), []string{"id"}, []string{o.getID()})
+	if err != nil {
+		return err
+	}
+	if resp != "win" {
+		return &omegleErr{"StopLookingForCommonLikes() returned something other than win", resp}
+	}
+	return nil
 }

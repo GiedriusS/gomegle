@@ -133,3 +133,32 @@ func TestGetStatus(t *testing.T) {
 		t.Error("One of the struct members is empty or zero")
 	}
 }
+
+func TestStopLookingForCommonLikes(t *testing.T) {
+	var o Omegle
+	err := o.StopLookingForCommonLikes()
+	if err == nil {
+		t.Error("Expected a error, got nil")
+	}
+	err = o.GetID()
+	if err != nil {
+		t.Error(err)
+	}
+	err = o.StopLookingForCommonLikes()
+	if err == nil {
+		t.Error("Expected a error, got nil")
+	}
+	o.Topics = []string{"Pizza"}
+	err = o.GetID()
+	if err != nil {
+		t.Error(err)
+	}
+	err = o.StopLookingForCommonLikes()
+	if err != nil {
+		t.Error(err)
+	}
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
+	}
+}

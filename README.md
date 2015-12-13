@@ -8,7 +8,7 @@ protocol. Also, it must include an example client for basic interaction
 # Feature matrix
 |                            | Implemented | Error checking |
 |----------------------------|-------------|----------------|
-| /stoplookingforcommonlikes | no          | no             |
+| /stoplookingforcommonlikes | yes         | yes            |
 | /generate                  | no          | no             |
 | /send                      | yes         | yes            |
 | /status                    | yes         | yes            |
