@@ -187,6 +187,7 @@ func (o *Omegle) ShowTyping() (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
+
 	ret, err := post_request(o.build_url(TYPING_CMD), []string{"id"}, []string{o.get_id()})
 	if ret != "win" {
 		return &omegle_err{"ShowTyping() returned something other than win", ret}
@@ -199,6 +200,7 @@ func (o *Omegle) StopTyping() (err error) {
 	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
+
 	ret, err := post_request(o.build_url(STOPTYPING_CMD), []string{"id"}, []string{o.get_id()})
 	if ret != "win" {
 		return &omegle_err{"StopTyping() returned something other than win", ret}
@@ -208,18 +210,18 @@ func (o *Omegle) StopTyping() (err error) {
 
 // Disconnect from the Omegle server
 func (o *Omegle) Disconnect() (err error) {
-	o.id_m.Lock()
-	defer o.id_m.Unlock()
-	if o.id == "" {
+	if o.get_id() == "" {
 		return &omegle_err{"id is empty", ""}
 	}
 	ret, err := post_request(o.build_url(DISCONNECT_CMD), []string{"id"}, []string{o.id})
+
 	if err != nil {
 		return
 	}
 	if ret != "win" {
 		return &omegle_err{"Disconnect() returned something other than win", ret}
 	}
+
 	return nil
 }
 
@@ -231,6 +233,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	if msg == "" {
 		return &omegle_err{"msg is empty", ""}
 	}
+
 	ret, err := post_request(o.build_url(SEND_CMD), []string{"id", "msg"}, []string{o.get_id(), msg})
 	if err != nil {
 		return
@@ -238,6 +241,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 	if ret != "win" {
 		return &omegle_err{"SendMessage() returned something else than win", ret}
 	}
+
 	return nil
 }
 
@@ -257,64 +261,69 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 
 	var otpt interface{}
 	json.Unmarshal([]byte(ret), &otpt)
-	if oi, ok := otpt.([]interface{}); ok {
-		for _, v := range oi {
-			if sep_arr, ok := v.([]interface{}); ok {
-				status := ""
-				if str, ok := sep_arr[0].(string); ok {
-					status = str
-				}
-				if status == "" {
-					continue
-				}
-				messages := []string{}
-				for i := 1; i < len(sep_arr); i++ {
-					if str, ok := sep_arr[i].(string); ok {
-						messages = append(messages, str)
-					}
-				}
-				switch status {
-				case "antinudeBanned":
-					st = append(st, ANTINUDEBANNED)
-				case "connectionDied":
-					st = append(st, CONNECTIONDIED)
-				case "error":
-					st = append(st, ERROR)
-				case "waiting":
-					st = append(st, WAITING)
-				case "spyDisconnected":
-					st = append(st, SPYDISCONNECTED)
-				case "strangerDisconnected":
-					st = append(st, DISCONNECTED)
-				case "connected":
-					st = append(st, CONNECTED)
-				case "stoppedTyping":
-					st = append(st, STOPPEDTYPING)
-				case "typing":
-					st = append(st, TYPING)
-				case "gotMessage":
-					st = append(st, MESSAGE)
-				case "identDigests":
-					st = append(st, IDENTDIGESTS)
-				case "spyTyping":
-					st = append(st, SPYTYPING)
-				case "spyStoppedTyping":
-					st = append(st, SPYSTOPPEDTYPING)
-				case "spyMessage":
-					st = append(st, SPYMESSAGE)
-				case "serverMessage":
-					st = append(st, SERVERMESSAGE)
-				case "question":
-					st = append(st, QUESTION)
-				default:
-					continue
-				}
-				msg = append(msg, messages)
+	data, ok := otpt.([]interface{})
+	if ok == false {
+		return []Event{}, [][]string{}, &omegle_err{"failed to unmarshal", ret}
+	}
 
+	for _, dv := range data {
+		arr, ok := dv.([]interface{})
+		if ok == false {
+			continue
+		}
+
+		status := ""
+		if str, ok := arr[0].(string); ok {
+			status = str
+		}
+		if status == "" {
+			continue
+		}
+
+		messages := []string{}
+		for i := 1; i < len(arr); i++ {
+			if str, ok := arr[i].(string); ok {
+				messages = append(messages, str)
 			}
 		}
-	} else {
-		return []Event{}, [][]string{}, &omegle_err{"failed to unmarshal", ret}
+
+		switch status {
+		case "antinudeBanned":
+			st = append(st, ANTINUDEBANNED)
+		case "connectionDied":
+			st = append(st, CONNECTIONDIED)
+		case "error":
+			st = append(st, ERROR)
+		case "waiting":
+			st = append(st, WAITING)
+		case "spyDisconnected":
+			st = append(st, SPYDISCONNECTED)
+		case "strangerDisconnected":
+			st = append(st, DISCONNECTED)
+		case "connected":
+			st = append(st, CONNECTED)
+		case "stoppedTyping":
+			st = append(st, STOPPEDTYPING)
+		case "typing":
+			st = append(st, TYPING)
+		case "gotMessage":
+			st = append(st, MESSAGE)
+		case "identDigests":
+			st = append(st, IDENTDIGESTS)
+		case "spyTyping":
+			st = append(st, SPYTYPING)
+		case "spyStoppedTyping":
+			st = append(st, SPYSTOPPEDTYPING)
+		case "spyMessage":
+			st = append(st, SPYMESSAGE)
+		case "serverMessage":
+			st = append(st, SERVERMESSAGE)
+		case "question":
+			st = append(st, QUESTION)
+		default:
+			continue
+		}
+		msg = append(msg, messages)
 	}
 
 	if len(st) != 0 {
