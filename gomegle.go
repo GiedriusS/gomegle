@@ -363,6 +363,8 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 
 	if num, ok := data["count"].(float64); ok {
 		st.Count = int(num)
+	} else {
+		return st, &omegle_err{"failed to parse count", resp}
 	}
 
 	if data, ok := data["force_unmon"].(bool); ok {
@@ -377,20 +379,32 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 		}
 	}
 
+	if len(st.Antinudeservers) == 0 {
+		return st, &omegle_err{"failed to parse antinudeservers", resp}
+	}
+
 	if num, ok := data["antinudepercent"].(float64); ok {
 		st.Antinudepercent = num
+	} else {
+		return st, &omegle_err{"failed to parse antinudepercent", resp}
 	}
 
 	if num, ok := data["spyeeQueueTime"].(float64); ok {
 		st.SpyeeQueueTime = num
+	} else {
+		return st, &omegle_err{"failed to parse spyeeQueueTime", resp}
 	}
 
 	if num, ok := data["spyQueueTime"].(float64); ok {
 		st.SpyQueueTime = num
+	} else {
+		return st, &omegle_err{"failed to parse spyQueueTime", resp}
 	}
 
 	if num, ok := data["timestamp"].(float64); ok {
 		st.Timestamp = num
+	} else {
+		return st, &omegle_err{"failed to parse timestamp", resp}
 	}
 
 	if data, ok := data["servers"].([]interface{}); ok {
@@ -399,6 +413,10 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 				st.Servers = append(st.Servers, str)
 			}
 		}
+	}
+
+	if len(st.Servers) == 0 {
+		return st, &omegle_err{"failed to parse servers", resp}
 	}
 	return
 }

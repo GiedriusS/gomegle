@@ -12,7 +12,7 @@ interaction with Omegle's chat
 | /stoplookingforcommonlikes | no          | no             |
 | /generate                  | no          | no             |
 | /send                      | yes         | yes            |
-| /status                    | not fully   |                |
+| /status                    | yes         | yes            |
 | /typing                    | yes         | yes            |
 | /stoppedtyping             | yes         | yes            |
 | /disconnect                | yes         | yes            |
