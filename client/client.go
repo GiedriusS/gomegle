@@ -7,6 +7,7 @@ import (
 	"github.com/GiedriusS/gomegle"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -52,6 +53,7 @@ func main() {
 	group := flag.String("group", "", "Only search for strangers in this group (\"unmon\" for unmonitored chat")
 	server := flag.String("server", "", "Connect to this server to search for strangers")
 	question := flag.String("question", "", "If not empty then turn on \"spyer\" mode and use this question")
+	topics := flag.String("topic", "", "A comma delimited list of topics you are interested in")
 	cansavequestion := flag.Bool("cansavequestion", false, "If true then in \"spyer\" mode omegle will be permitted to re-use your question")
 	wantsspy := flag.Bool("wantsspy", false, "If true then \"spyee\" mode is started")
 	asl := flag.String("asl", "", "If not empty then this message will be sent as soon as you start talking to a stranger")
@@ -60,6 +62,7 @@ func main() {
 	if *server != "" {
 		o.Server = *server
 	}
+
 	if *question != "" {
 		o.Question = *question
 		o.Cansavequestion = *cansavequestion
@@ -68,6 +71,7 @@ func main() {
 	} else {
 		o.Lang = *lang
 		o.Group = *group
+		o.Topics = strings.Split(*topics, ",")
 	}
 
 	ret := o.GetID()
