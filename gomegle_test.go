@@ -48,11 +48,15 @@ func TestShowTyping(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestStopTyping(t *testing.T) {
 	var o Omegle
-	err := o.ShowTyping()
+	err := o.StopTyping()
 	if err == nil {
 		t.Error("StopTyping() should have returned an error")
 	}
@@ -61,6 +65,10 @@ func TestStopTyping(t *testing.T) {
 		t.Error(err)
 	}
 	err = o.StopTyping()
+	if err != nil {
+		t.Error(err)
+	}
+	err = o.Disconnect()
 	if err != nil {
 		t.Error(err)
 	}
