@@ -71,7 +71,9 @@ func main() {
 	} else {
 		o.Lang = *lang
 		o.Group = *group
-		o.Topics = strings.Split(*topics, ",")
+		if *topics != "" {
+			o.Topics = strings.Split(*topics, ",")
+		}
 	}
 
 	ret := o.GetID()
