@@ -12,13 +12,13 @@ import (
 
 // Various commands sent to the omegle servers
 const (
-	START_CMD      = "start"
-	TYPING_CMD     = "typing"
-	STOPTYPING_CMD = "stoppedtyping"
-	SEND_CMD       = "send"
-	EVENT_CMD      = "events"
-	DISCONNECT_CMD = "disconnect"
-	STATUS_CMD     = "status"
+	startCmd      = "start"
+	typingCmd     = "typing"
+	stoptypingCmd = "stoppedtyping"
+	sendCmd       = "send"
+	eventCmd      = "events"
+	disconnectCmd = "disconnect"
+	statusCmd     = "status"
 )
 
 // Types of events UpdateEvents() will return
@@ -41,39 +41,40 @@ const (
 	SERVERMESSAGE           // Some kind of server message
 )
 
-type Event int // A type used for storing only the above event codes
+// Event is a type used for storing the above event codes
+type Event int
 
 // A private struct for storing errors
-type omegle_err struct {
+type omegleErr struct {
 	err string
 	buf string // Buffer that could be used to store the returned result
 }
 
 // Mandatory function to satisfy the interface
-func (e *omegle_err) Error() string {
+func (e *omegleErr) Error() string {
 	if e.buf == "" {
 		return "Omegle: " + e.err
 	}
 	return "Omegle (" + e.buf + "): " + e.err
 }
 
-// Stores information about a connection to Omegle
+// Omegle stores information about the connection to omegle.com
 type Omegle struct {
 	id              string     // Private member used for identifying ourselves to omegle
 	Lang            string     // Optional, two character language code
 	Group           string     // Optional, "unmon" to join unmonitored chat
 	Server          string     // Optional, can specify a certain server to use
-	id_m            sync.Mutex // Private member used for synchronising access to id
+	idM             sync.Mutex // Private member used for synchronising access to id
 	Question        string     // Optional, if not empty used as the question in "spyer" mode
 	Cansavequestion bool       // Optional, if question is not "" then permit omegle to save the question
 	Wantsspy        bool       // Optional, if true then "spyee" mode is started
 	Topics          []string   // Optional, if not empty will look only for people interested in these topics
 }
 
-// Stores information about omegle status
+// Status stores information about omegle status
 type Status struct {
 	Count           int  // Connection count
-	Force_unmon     bool // If true then your IP was banned
+	ForceUnmon      bool // If true then your IP was banned
 	Antinudeservers []string
 	Antinudepercent float64
 	// If spyQueueTime is larger, there are more spies than spyees which the client
@@ -85,7 +86,7 @@ type Status struct {
 }
 
 // Build a URL from o.Server and cmd that will be used for communication
-func (o *Omegle) build_url(cmd string) string {
+func (o *Omegle) buildURL(cmd string) string {
 	if o.Server == "" {
 		return "http://omegle.com/" + cmd
 	}
@@ -93,24 +94,24 @@ func (o *Omegle) build_url(cmd string) string {
 }
 
 // Change the id
-func (o *Omegle) set_id(id string) {
-	defer o.id_m.Unlock()
-	o.id_m.Lock()
+func (o *Omegle) setID(id string) {
+	defer o.idM.Unlock()
+	o.idM.Lock()
 	o.id = id
 }
 
 // Get the id
-func (o *Omegle) get_id() (id string) {
-	defer o.id_m.Unlock()
-	o.id_m.Lock()
+func (o *Omegle) getID() (id string) {
+	defer o.idM.Unlock()
+	o.idM.Lock()
 	id = o.id
 	return
 }
 
 // Send a POST request with specified parameters and values
-func post_request(link string, parameters []string, values []string) (body string, err error) {
+func postRequest(link string, parameters []string, values []string) (body string, err error) {
 	data := url.Values{}
-	for i, _ := range parameters {
+	for i := range parameters {
 		data.Set(parameters[i], values[i])
 	}
 
@@ -129,7 +130,7 @@ func post_request(link string, parameters []string, values []string) (body strin
 }
 
 // Send a GET request with specified parameters and values
-func get_request(link string, parameters []string, values []string) (body string, err error) {
+func getRequest(link string, parameters []string, values []string) (body string, err error) {
 	client := &http.Client{}
 
 	u, err := url.Parse(link)
@@ -138,7 +139,7 @@ func get_request(link string, parameters []string, values []string) (body string
 	}
 
 	query := u.Query()
-	for i, _ := range parameters {
+	for i := range parameters {
 		query.Set(parameters[i], values[i])
 	}
 	u.RawQuery = query.Encode()
@@ -163,7 +164,7 @@ func get_request(link string, parameters []string, values []string) (body string
 }
 
 // Get a new ID but without any locking
-func (o *Omegle) getid_unlocked() (id string, err error) {
+func (o *Omegle) getidUnlocked() (id string, err error) {
 	params := []string{"lang", "group"}
 	args := []string{o.Lang, o.Group}
 
@@ -190,93 +191,93 @@ func (o *Omegle) getid_unlocked() (id string, err error) {
 		}
 	}
 
-	resp, err := get_request(o.build_url(START_CMD), params, args)
+	resp, err := getRequest(o.buildURL(startCmd), params, args)
 	if err != nil {
 		return "", err
 	}
 	return strings.Trim(string(resp), "\""), nil
 }
 
-// Get and set a new id
+// GetID gets and sets a new id
 func (o *Omegle) GetID() (err error) {
-	id, err := o.getid_unlocked()
+	id, err := o.getidUnlocked()
 	if err != nil {
 		return err
 	}
-	o.set_id(id)
+	o.setID(id)
 	return nil
 }
 
-// Show to the stranger that we are typing
+// ShowTyping shows to the stranger that we are typing
 func (o *Omegle) ShowTyping() (err error) {
-	if o.get_id() == "" {
-		return &omegle_err{"id is empty", ""}
+	if o.getID() == "" {
+		return &omegleErr{"id is empty", ""}
 	}
 
-	ret, err := post_request(o.build_url(TYPING_CMD), []string{"id"}, []string{o.get_id()})
+	ret, err := postRequest(o.buildURL(typingCmd), []string{"id"}, []string{o.getID()})
 	if ret != "win" {
-		return &omegle_err{"ShowTyping() returned something other than win", ret}
+		return &omegleErr{"ShowTyping() returned something other than win", ret}
 	}
 	return
 }
 
-// Show to the stranger that we have stopped typing
+// StopTyping shows to the stranger that we stopped typing
 func (o *Omegle) StopTyping() (err error) {
-	if o.get_id() == "" {
-		return &omegle_err{"id is empty", ""}
+	if o.getID() == "" {
+		return &omegleErr{"id is empty", ""}
 	}
 
-	ret, err := post_request(o.build_url(STOPTYPING_CMD), []string{"id"}, []string{o.get_id()})
+	ret, err := postRequest(o.buildURL(stoptypingCmd), []string{"id"}, []string{o.getID()})
 	if ret != "win" {
-		return &omegle_err{"StopTyping() returned something other than win", ret}
+		return &omegleErr{"StopTyping() returned something other than win", ret}
 	}
 	return
 }
 
 // Disconnect from the Omegle server
 func (o *Omegle) Disconnect() (err error) {
-	if o.get_id() == "" {
-		return &omegle_err{"id is empty", ""}
+	if o.getID() == "" {
+		return &omegleErr{"id is empty", ""}
 	}
-	ret, err := post_request(o.build_url(DISCONNECT_CMD), []string{"id"}, []string{o.id})
+	ret, err := postRequest(o.buildURL(disconnectCmd), []string{"id"}, []string{o.id})
 
 	if err != nil {
 		return
 	}
 	if ret != "win" {
-		return &omegle_err{"Disconnect() returned something other than win", ret}
+		return &omegleErr{"Disconnect() returned something other than win", ret}
 	}
 
 	return nil
 }
 
-// Send a message
+// SendMessage sends a message to the stranger
 func (o *Omegle) SendMessage(msg string) (err error) {
-	if o.get_id() == "" {
-		return &omegle_err{"id is empty", ""}
+	if o.getID() == "" {
+		return &omegleErr{"id is empty", ""}
 	}
 	if msg == "" {
-		return &omegle_err{"msg is empty", ""}
+		return &omegleErr{"msg is empty", ""}
 	}
 
-	ret, err := post_request(o.build_url(SEND_CMD), []string{"id", "msg"}, []string{o.get_id(), msg})
+	ret, err := postRequest(o.buildURL(sendCmd), []string{"id", "msg"}, []string{o.getID(), msg})
 	if err != nil {
 		return
 	}
 	if ret != "win" {
-		return &omegle_err{"SendMessage() returned something else than win", ret}
+		return &omegleErr{"SendMessage() returned something else than win", ret}
 	}
 
 	return nil
 }
 
-// Visit the events page and check for new events
+// UpdateEvents visits the events page and gathers new events
 func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
-	if o.get_id() == "" {
-		return []Event{}, [][]string{}, &omegle_err{"id is empty", ""}
+	if o.getID() == "" {
+		return []Event{}, [][]string{}, &omegleErr{"id is empty", ""}
 	}
 
-	ret, err := post_request(o.build_url(EVENT_CMD), []string{"id"}, []string{o.get_id()})
+	ret, err := postRequest(o.buildURL(eventCmd), []string{"id"}, []string{o.getID()})
 	if err != nil {
 		return []Event{}, [][]string{}, err
 	}
@@ -291,7 +292,7 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	}
 	data, ok := otpt.([]interface{})
 	if ok == false {
-		return []Event{}, [][]string{}, &omegle_err{"invalid json (root element must be an array)", ret}
+		return []Event{}, [][]string{}, &omegleErr{"invalid json (root element must be an array)", ret}
 	}
 
 	for _, dv := range data {
@@ -358,12 +359,12 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 		return st, msg, nil
 	}
 
-	return []Event{}, [][]string{}, &omegle_err{"Unknown error", ret}
+	return []Event{}, [][]string{}, &omegleErr{"Unknown error", ret}
 }
 
-// Get status of Omegle via http://[server].omegle.com/status
+// GetStatus gets status of omegle via http://[server].omegle.com/status
 func (o *Omegle) GetStatus() (st Status, err error) {
-	resp, err := get_request(o.build_url(STATUS_CMD), []string{}, []string{})
+	resp, err := getRequest(o.buildURL(statusCmd), []string{}, []string{})
 	if err != nil {
 		return Status{}, err
 	}
@@ -374,17 +375,17 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 	}
 	data, ok := otpt.(map[string]interface{})
 	if ok == false {
-		return Status{}, &omegle_err{"status didn't return an JSON object", resp}
+		return Status{}, &omegleErr{"status didn't return an JSON object", resp}
 	}
 
 	if num, ok := data["count"].(float64); ok {
 		st.Count = int(num)
 	} else {
-		return st, &omegle_err{"failed to parse count", resp}
+		return st, &omegleErr{"failed to parse count", resp}
 	}
 
 	if data, ok := data["force_unmon"].(bool); ok {
-		st.Force_unmon = data
+		st.ForceUnmon = data
 	}
 
 	if data, ok := data["antinudeservers"].([]interface{}); ok {
@@ -396,31 +397,31 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 	}
 
 	if len(st.Antinudeservers) == 0 {
-		return st, &omegle_err{"failed to parse antinudeservers", resp}
+		return st, &omegleErr{"failed to parse antinudeservers", resp}
 	}
 
 	if num, ok := data["antinudepercent"].(float64); ok {
 		st.Antinudepercent = num
 	} else {
-		return st, &omegle_err{"failed to parse antinudepercent", resp}
+		return st, &omegleErr{"failed to parse antinudepercent", resp}
 	}
 
 	if num, ok := data["spyeeQueueTime"].(float64); ok {
 		st.SpyeeQueueTime = num
 	} else {
-		return st, &omegle_err{"failed to parse spyeeQueueTime", resp}
+		return st, &omegleErr{"failed to parse spyeeQueueTime", resp}
 	}
 
 	if num, ok := data["spyQueueTime"].(float64); ok {
 		st.SpyQueueTime = num
 	} else {
-		return st, &omegle_err{"failed to parse spyQueueTime", resp}
+		return st, &omegleErr{"failed to parse spyQueueTime", resp}
 	}
 
 	if num, ok := data["timestamp"].(float64); ok {
 		st.Timestamp = num
 	} else {
-		return st, &omegle_err{"failed to parse timestamp", resp}
+		return st, &omegleErr{"failed to parse timestamp", resp}
 	}
 
 	if data, ok := data["servers"].([]interface{}); ok {
@@ -432,7 +433,7 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 	}
 
 	if len(st.Servers) == 0 {
-		return st, &omegle_err{"failed to parse servers", resp}
+		return st, &omegleErr{"failed to parse servers", resp}
 	}
 	return
 }
