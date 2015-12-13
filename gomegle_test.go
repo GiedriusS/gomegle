@@ -119,3 +119,17 @@ func TestUpdateEvents(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestGetStatus(t *testing.T) {
+	var o Omegle
+	st, err := o.GetStatus()
+	if err != nil {
+		t.Error(err)
+	}
+	if len(st.Antinudeservers) == 0 || len(st.Servers) == 0 {
+		t.Error("One of the slices is empty")
+	}
+	if float64(st.Count)+st.Antinudepercent+st.SpyeeQueueTime+st.SpyQueueTime+st.Timestamp-0.0001 <= 0 {
+		t.Error("One of the struct members is empty or zero")
+	}
+}

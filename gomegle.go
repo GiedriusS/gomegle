@@ -18,6 +18,7 @@ const (
 	SEND_CMD       = "send"
 	EVENT_CMD      = "events"
 	DISCONNECT_CMD = "disconnect"
+	STATUS_CMD     = "status"
 )
 
 // Types of events UpdateEvents() will return
@@ -56,7 +57,7 @@ func (e *omegle_err) Error() string {
 	return "Omegle (" + e.buf + "): " + e.err
 }
 
-// Main struct that represents a connection to Omegle
+// Stores information about a connection to Omegle
 type Omegle struct {
 	id              string     // Private member used for identifying ourselves to omegle
 	Lang            string     // Optional, two character language code
@@ -66,6 +67,20 @@ type Omegle struct {
 	Question        string     // Optional, if not empty used as the question in "spyer" mode
 	Cansavequestion bool       // Optional, if question is not "" then permit omegle to save the question
 	Wantsspy        bool       // Optional, if true then "spyee" mode is started
+}
+
+// Stores information about omegle status
+type Status struct {
+	Count           int  // Connection count
+	Force_unmon     bool // If true then your IP was banned
+	Antinudeservers []string
+	Antinudepercent float64
+	// If spyQueueTime is larger, there are more spies than spyees which the client
+	// can use to suggest a mode
+	SpyQueueTime   float64
+	SpyeeQueueTime float64
+	Timestamp      float64
+	Servers        []string
 }
 
 // Build a URL from o.Server and cmd that will be used for communication
@@ -331,4 +346,59 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	}
 
 	return []Event{}, [][]string{}, &omegle_err{"Unknown error", ret}
+}
+
+// Get status of Omegle via http://[server].omegle.com/status
+func (o *Omegle) GetStatus() (st Status, err error) {
+	resp, err := get_request(o.build_url(STATUS_CMD), []string{}, []string{})
+	if err != nil {
+		return Status{}, err
+	}
+	var otpt interface{}
+	json.Unmarshal([]byte(resp), &otpt)
+	data, ok := otpt.(map[string]interface{})
+	if ok == false {
+		return Status{}, &omegle_err{"status didn't return an JSON object", resp}
+	}
+
+	if num, ok := data["count"].(float64); ok {
+		st.Count = int(num)
+	}
+
+	if data, ok := data["force_unmon"].(bool); ok {
+		st.Force_unmon = data
+	}
+
+	if data, ok := data["antinudeservers"].([]interface{}); ok {
+		for _, elem := range data {
+			if str, ok := elem.(string); ok {
+				st.Antinudeservers = append(st.Antinudeservers, str)
+			}
+		}
+	}
+
+	if num, ok := data["antinudepercent"].(float64); ok {
+		st.Antinudepercent = num
+	}
+
+	if num, ok := data["spyeeQueueTime"].(float64); ok {
+		st.SpyeeQueueTime = num
+	}
+
+	if num, ok := data["spyQueueTime"].(float64); ok {
+		st.SpyQueueTime = num
+	}
+
+	if num, ok := data["timestamp"].(float64); ok {
+		st.Timestamp = num
+	}
+
+	if data, ok := data["servers"].([]interface{}); ok {
+		for _, elem := range data {
+			if str, ok := elem.(string); ok {
+				st.Servers = append(st.Servers, str)
+			}
+		}
+	}
+	return
 }
