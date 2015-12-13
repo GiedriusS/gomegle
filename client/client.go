@@ -88,14 +88,17 @@ func main() {
 			log.Fatal(err)
 		}
 
-		for i, _ := range st {
+		for i := range st {
 			switch st[i] {
 			case gomegle.WAITING:
 				fmt.Println("> Waiting...")
 			case gomegle.CONNECTED:
 				fmt.Println("+ Connected...")
 				if *asl != "" && *question == "" && *wantsspy == false {
-					o.SendMessage(*asl)
+					err = o.SendMessage(*asl)
+					if err != nil {
+						log.Print(err)
+					}
 				}
 			case gomegle.DISCONNECTED:
 				fmt.Println("- Disconnected...")
