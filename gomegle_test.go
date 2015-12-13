@@ -12,7 +12,7 @@ func TestGetID(t *testing.T) {
 		t.Error(err)
 	}
 	re := regexp.MustCompile(`.*:.{30}`)
-	matches := re.MatchString(o.get_id())
+	matches := re.MatchString(o.getID())
 	if matches == false {
 		t.Error("Returned ID doesn't match correctly")
 	}
