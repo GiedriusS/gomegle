@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Various commands sent to the omegle servers
@@ -72,6 +74,7 @@ type Omegle struct {
 	Cansavequestion bool       // Optional, if question is not "" then permit omegle to save the question
 	Wantsspy        bool       // Optional, if true then "spyee" mode is started
 	Topics          []string   // Optional, if not empty will look only for people interested in these topics
+	randid          string     // Private member, random string of 8 chars length with 2-9 and A-Z
 }
 
 // Status stores information about omegle status
@@ -166,10 +169,24 @@ func getRequest(link string, parameters []string, values []string) (body string,
 	return string(ret), nil
 }
 
+const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+
+// generateRandID generates a random id and stores it if o.randid is not empty
+func (o *Omegle) generateRandID() {
+	if len(o.randid) != 0 {
+		return
+	}
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 8; i++ {
+		o.randid += string(chars[rand.Intn(len(chars))])
+	}
+}
+
 // Get a new ID but without any locking
 func (o *Omegle) getidUnlocked() (id string, err error) {
-	params := []string{"lang", "group"}
-	args := []string{o.Lang, o.Group}
+	o.generateRandID()
+	params := []string{"lang", "group", "randid"}
+	args := []string{o.Lang, o.Group, o.randid}
 
 	if o.Wantsspy == true {
 		params = append(params, "wantsspy")
@@ -371,7 +388,8 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 
 // GetStatus gets status of omegle via http://[server].omegle.com/status
 func (o *Omegle) GetStatus() (st Status, err error) {
-	resp, err := getRequest(o.buildURL(statusCmd), []string{}, []string{})
+	o.generateRandID()
+	resp, err := getRequest(o.buildURL(statusCmd), []string{"randid"}, []string{o.randid})
 	if err != nil {
 		return Status{}, err
 	}
