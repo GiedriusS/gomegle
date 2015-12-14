@@ -3,6 +3,7 @@ package gomegle
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -40,6 +41,7 @@ const (
 	SPYDISCONNECTED         // Spyee 1 or 2 has disconnected
 	SPYMESSAGE              // Spyee 1 or 2 has sent a message
 	SERVERMESSAGE           // Some kind of server message
+	COUNT                   // Updated connection/online count
 )
 
 // Event is a type used for storing the above event codes
@@ -314,10 +316,14 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 		for i := 1; i < len(arr); i++ {
 			if str, ok := arr[i].(string); ok {
 				messages = append(messages, str)
+			} else if fl, ok := arr[i].(float64); ok {
+				messages = append(messages, fmt.Sprintf("%f", fl))
 			}
 		}
 
 		switch status {
+		case "count":
+			st = append(st, COUNT)
 		case "antinudeBanned":
 			st = append(st, ANTINUDEBANNED)
 		case "connectionDied":
