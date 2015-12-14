@@ -312,15 +312,6 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 			continue
 		}
 
-		messages := []string{}
-		for i := 1; i < len(arr); i++ {
-			if str, ok := arr[i].(string); ok {
-				messages = append(messages, str)
-			} else if fl, ok := arr[i].(float64); ok {
-				messages = append(messages, fmt.Sprintf("%f", fl))
-			}
-		}
-
 		switch status {
 		case "count":
 			st = append(st, COUNT)
@@ -358,6 +349,15 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 			st = append(st, QUESTION)
 		default:
 			continue
+		}
+
+		messages := []string{}
+		for i := 1; i < len(arr); i++ {
+			if str, ok := arr[i].(string); ok {
+				messages = append(messages, str)
+			} else if fl, ok := arr[i].(float64); ok {
+				messages = append(messages, fmt.Sprintf("%f", fl))
+			}
 		}
 		msg = append(msg, messages)
 	}
