@@ -23,6 +23,7 @@ const (
 	disconnectCmd                = "disconnect"
 	statusCmd                    = "status"
 	stoplookingforcommonlikesCmd = "stoplookingforcommonlikes"
+	recaptchaCmd                 = "recaptcha"
 )
 
 // Types of events UpdateEvents() will return
@@ -496,7 +497,7 @@ func (o *Omegle) Recaptcha(challenge, response string) error {
 	if o.getID() == "" {
 		return &omegleErr{"id is empty", ""}
 	}
-	resp, err := postRequest(o.buildURL(stoplookingforcommonlikesCmd), []string{"id", "challenge", "response"}, []string{o.getID(), challenge, response})
+	resp, err := postRequest(o.buildURL(recaptchaCmd), []string{"id", "challenge", "response"}, []string{o.getID(), challenge, response})
 	if resp == "fail" {
 		return &omegleErr{"Recaptcha() returned \"fail\", expected something else", resp}
 	}
