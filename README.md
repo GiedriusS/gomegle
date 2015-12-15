@@ -17,6 +17,7 @@ protocol. Also, it must include an example client for basic interaction
 | /disconnect                | yes         | yes            |
 | /events                    | not fully   | yes            |
 | /start                     | yes         | yes            |
+| /recaptcha                 | yes         | yes            |
 
 Some more features are missing from the table but they are kind of obscure so they will be implemented later.
 
