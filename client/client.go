@@ -141,6 +141,10 @@ func main() {
 				}
 			case gomegle.SERVERMESSAGE:
 				fmt.Printf("%% %s\n", msg[i][0])
+			case gomegle.RECAPTCHAREQUIRED:
+				fmt.Printf("%% You need to go to the omegle website to enter a reCAPTCHA (%s)", msg[i][0])
+			case gomegle.RECAPTCHAREJECTED:
+				fmt.Printf("%% The reCAPTCHA was rejected (%s)", msg[i][0])
 			}
 		}
 	}

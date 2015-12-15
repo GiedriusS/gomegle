@@ -44,6 +44,11 @@ const (
 	SPYMESSAGE              // Spyee 1 or 2 has sent a message
 	SERVERMESSAGE           // Some kind of server message
 	COUNT                   // Updated connection/online count
+	// If you get this you have to prove you're human by going to
+	// google.com/recaptcha/api/image?c=[challenge] and sending the answer with
+	// Recaptcha()
+	RECAPTCHAREQUIRED
+	RECAPTCHAREJECTED
 )
 
 // Event is a type used for storing the above event codes
@@ -364,6 +369,10 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 			st = append(st, SERVERMESSAGE)
 		case "question":
 			st = append(st, QUESTION)
+		case "recaptchaRequired":
+			st = append(st, RECAPTCHAREQUIRED)
+		case "recaptchaRejected":
+			st = append(st, RECAPTCHAREJECTED)
 		default:
 			continue
 		}
@@ -479,4 +488,17 @@ func (o *Omegle) StopLookingForCommonLikes() error {
 		return &omegleErr{"StopLookingForCommonLikes() returned something other than win", resp}
 	}
 	return nil
+}
+
+// Recaptcha sends back the response to given challenge to omegle
+// Only to be used in case of recaptchaRequired or recaptchaRejected events
+func (o *Omegle) Recaptcha(challenge, response string) error {
+	if o.getID() == "" {
+		return &omegleErr{"id is empty", ""}
+	}
+	resp, err := postRequest(o.buildURL(stoplookingforcommonlikesCmd), []string{"id", "challenge", "response"}, []string{o.getID(), challenge, response})
+	if resp == "fail" {
+		return &omegleErr{"Recaptcha() returned \"fail\", expected something else", resp}
+	}
+	return err
 }
