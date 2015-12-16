@@ -242,7 +242,7 @@ func (o *Omegle) ShowTyping() (err error) {
 
 	ret, err := postRequest(o.buildURL(typingCmd), []string{"id"}, []string{o.getID()})
 	if ret != "win" {
-		return &omegleErr{"ShowTyping() returned something other than win", ret}
+		return &omegleErr{"returned something other than win", ret}
 	}
 	return
 }
@@ -255,7 +255,7 @@ func (o *Omegle) StopTyping() (err error) {
 
 	ret, err := postRequest(o.buildURL(stoptypingCmd), []string{"id"}, []string{o.getID()})
 	if ret != "win" {
-		return &omegleErr{"StopTyping() returned something other than win", ret}
+		return &omegleErr{"returned something other than win", ret}
 	}
 	return
 }
@@ -271,7 +271,7 @@ func (o *Omegle) Disconnect() (err error) {
 		return
 	}
 	if ret != "win" {
-		return &omegleErr{"Disconnect() returned something other than win", ret}
+		return &omegleErr{"returned something other than win", ret}
 	}
 
 	return nil
@@ -291,7 +291,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 		return
 	}
 	if ret != "win" {
-		return &omegleErr{"SendMessage() returned something else than win", ret}
+		return &omegleErr{"returned something else than win", ret}
 	}
 
 	return nil
@@ -393,7 +393,7 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 		return st, msg, nil
 	}
 
-	return []Event{}, [][]string{}, &omegleErr{"Unknown error", ret}
+	return []Event{}, [][]string{}, &omegleErr{"unknown error", ret}
 }
 
 // GetStatus gets status of omegle via http://[server].omegle.com/status
@@ -486,7 +486,7 @@ func (o *Omegle) StopLookingForCommonLikes() error {
 		return err
 	}
 	if resp != "win" {
-		return &omegleErr{"StopLookingForCommonLikes() returned something other than win", resp}
+		return &omegleErr{"returned something other than win", resp}
 	}
 	return nil
 }
@@ -499,7 +499,7 @@ func (o *Omegle) Recaptcha(challenge, response string) error {
 	}
 	resp, err := postRequest(o.buildURL(recaptchaCmd), []string{"id", "challenge", "response"}, []string{o.getID(), challenge, response})
 	if resp == "fail" {
-		return &omegleErr{"Recaptcha() returned \"fail\", expected something else", resp}
+		return &omegleErr{"returned \"fail\", expected something else", resp}
 	}
 	return err
 }

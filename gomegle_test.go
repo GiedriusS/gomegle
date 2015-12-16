@@ -14,7 +14,7 @@ func TestGetID(t *testing.T) {
 	re := regexp.MustCompile(`.*:.{30}`)
 	matches := re.MatchString(o.getID())
 	if matches == false {
-		t.Error("Returned ID doesn't match correctly")
+		t.Error("returned ID doesn't match correctly")
 	}
 }
 
@@ -22,7 +22,7 @@ func TestDisconnect(t *testing.T) {
 	var o Omegle
 	err := o.Disconnect()
 	if err == nil {
-		t.Error("Disconnect() should have returned an error")
+		t.Error("should have returned an error")
 	}
 	err = o.GetID()
 	if err != nil {
@@ -38,7 +38,7 @@ func TestShowTyping(t *testing.T) {
 	var o Omegle
 	err := o.ShowTyping()
 	if err == nil {
-		t.Error("ShowTyping() should have returned an error")
+		t.Error("should have returned an error")
 	}
 	err = o.GetID()
 	if err != nil {
@@ -58,7 +58,7 @@ func TestStopTyping(t *testing.T) {
 	var o Omegle
 	err := o.StopTyping()
 	if err == nil {
-		t.Error("StopTyping() should have returned an error")
+		t.Error("should have returned an error")
 	}
 	err = o.GetID()
 	if err != nil {
@@ -78,7 +78,7 @@ func TestSendMessage(t *testing.T) {
 	var o Omegle
 	err := o.SendMessage("test")
 	if err == nil {
-		t.Error("SendMessage() should have returned an error")
+		t.Error("should have returned an error")
 	}
 	err = o.GetID()
 	if err != nil {
@@ -98,7 +98,7 @@ func TestUpdateEvents(t *testing.T) {
 	var o Omegle
 	event, st, err := o.UpdateEvents()
 	if err == nil {
-		t.Error("UpdateEvents() should have returned an error")
+		t.Error("should have returned an error")
 	}
 	if len(st) != 0 || len(event) != 0 {
 		t.Error("st and event length must be 0")
@@ -112,7 +112,7 @@ func TestUpdateEvents(t *testing.T) {
 		t.Error(err)
 	}
 	if len(event) == 0 || len(st) == 0 {
-		t.Error("UpdateEvents() returned no events")
+		t.Error("returned no events")
 	}
 	err = o.Disconnect()
 	if err != nil {
