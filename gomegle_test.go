@@ -127,10 +127,10 @@ func TestGetStatus(t *testing.T) {
 		t.Error(err)
 	}
 	if len(st.Antinudeservers) == 0 || len(st.Servers) == 0 {
-		t.Error("One of the slices is empty")
+		t.Error("one of the slices is empty")
 	}
 	if float64(st.Count)+st.Antinudepercent+st.SpyeeQueueTime+st.SpyQueueTime+st.Timestamp-0.0001 <= 0 {
-		t.Error("One of the struct members is empty or zero")
+		t.Error("one of the struct members is empty or zero")
 	}
 }
 
@@ -138,7 +138,7 @@ func TestStopLookingForCommonLikes(t *testing.T) {
 	var o Omegle
 	err := o.StopLookingForCommonLikes()
 	if err == nil {
-		t.Error("Expected a error, got nil")
+		t.Error("expected a error, got nil")
 	}
 	err = o.GetID()
 	if err != nil {
@@ -146,7 +146,7 @@ func TestStopLookingForCommonLikes(t *testing.T) {
 	}
 	err = o.StopLookingForCommonLikes()
 	if err == nil {
-		t.Error("Expected a error, got nil")
+		t.Error("expected a error, got nil")
 	}
 	o.Topics = []string{"Pizza"}
 	err = o.GetID()
@@ -156,6 +156,26 @@ func TestStopLookingForCommonLikes(t *testing.T) {
 	err = o.StopLookingForCommonLikes()
 	if err != nil {
 		t.Error(err)
+	}
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestRecaptcha(t *testing.T) {
+	var o Omegle
+	err := o.Recaptcha("", "")
+	if err == nil {
+		t.Error("expected err, got nil")
+	}
+	err = o.GetID()
+	if err != nil {
+		t.Error(err)
+	}
+	err = o.Recaptcha("", "")
+	if err == nil {
+		t.Error("expected err, got nil")
 	}
 	err = o.Disconnect()
 	if err != nil {
