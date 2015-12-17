@@ -11,8 +11,13 @@ import (
 	"time"
 )
 
-func messageListener(o *gomegle.Omegle) {
+func messageListener(o *gomegle.Omegle, quit chan int) {
 	for {
+		select {
+		case <-quit:
+			os.Exit(1)
+		default:
+		}
 		err := o.ShowTyping()
 		if err != nil {
 			log.Print(err)
@@ -50,7 +55,7 @@ func messageListener(o *gomegle.Omegle) {
 func main() {
 	var o gomegle.Omegle
 	lang := flag.String("lang", "", "Two character language code for searching strangers that only speak that language")
-	group := flag.String("group", "", "Only search for strangers in this group (\"unmon\" for unmonitored chat")
+	group := flag.String("group", "", "Only search for strangers in this group (\"unmon\" for unmonitored chat)")
 	server := flag.String("server", "", "Connect to this server to search for strangers")
 	question := flag.String("question", "", "If not empty then turn on \"spyer\" mode and use this question")
 	topics := flag.String("topic", "", "A comma delimited list of topics you are interested in")
@@ -58,6 +63,8 @@ func main() {
 	wantsspy := flag.Bool("wantsspy", false, "If true then \"spyee\" mode is started")
 	asl := flag.String("asl", "", "If not empty then this message will be sent as soon as you start talking to a stranger")
 	flag.Parse()
+
+	exit := make(chan int)
 
 	if *server != "" {
 		o.Server = *server
@@ -80,7 +87,7 @@ func main() {
 	if ret != nil {
 		log.Fatal(ret)
 	}
-	go messageListener(&o)
+	go messageListener(&o, exit)
 
 	for {
 		st, msg, err := o.UpdateEvents()
@@ -90,6 +97,12 @@ func main() {
 
 		for i := range st {
 			switch st[i] {
+			case gomegle.ANTINUDEBANNED:
+				fmt.Printf("%% You have been banned for possible bad behaviour!\n")
+				fmt.Printf("%% Pass -group=\"unmon\" to join unmonitored chat\n")
+				exit <- 1
+				os.Exit(1)
+				return
 			case gomegle.WAITING:
 				fmt.Println("> Waiting...")
 			case gomegle.CONNECTED:
@@ -104,6 +117,7 @@ func main() {
 				fmt.Println("- Disconnected...")
 				ret := o.GetID()
 				if ret != nil {
+					exit <- 1
 					log.Fatal(ret)
 				}
 			case gomegle.TYPING:
@@ -118,6 +132,7 @@ func main() {
 				fmt.Printf("> %s disconnected\n", msg[i][0])
 				ret := o.GetID()
 				if ret != nil {
+					exit <- 1
 					log.Fatal(ret)
 				}
 			case gomegle.SPYMESSAGE:
@@ -130,6 +145,7 @@ func main() {
 				fmt.Println("- Error occured, disconnected...")
 				ret := o.GetID()
 				if ret != nil {
+					exit <- 1
 					log.Fatal(ret)
 				}
 			case gomegle.ERROR:
@@ -137,6 +153,7 @@ func main() {
 				time.Sleep(500 * time.Millisecond)
 				ret := o.GetID()
 				if ret != nil {
+					exit <- 1
 					log.Fatal(ret)
 				}
 			case gomegle.SERVERMESSAGE:
@@ -145,6 +162,14 @@ func main() {
 				fmt.Printf("%% You need to go to the omegle website to enter a reCAPTCHA (%s)", msg[i][0])
 			case gomegle.RECAPTCHAREJECTED:
 				fmt.Printf("%% The reCAPTCHA was rejected (%s)", msg[i][0])
+			case gomegle.COMMONLIKES:
+				j := 1
+				fmt.Printf("%% Shared topics:")
+				for j < len(msg[i]) {
+					fmt.Printf(" %s", msg[i][j])
+					j++
+				}
+				fmt.Printf("\n")
 			}
 		}
 	}
