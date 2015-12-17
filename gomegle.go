@@ -45,6 +45,7 @@ const (
 	SPYMESSAGE              // Spyee 1 or 2 has sent a message
 	SERVERMESSAGE           // Some kind of server message
 	COUNT                   // Updated connection/online count
+	COMMONLIKES             // Shared topics between you and the stranger
 	// If you get this you have to prove you're human by going to
 	// google.com/recaptcha/api/image?c=[challenge] and sending the answer with
 	// Recaptcha()
@@ -374,6 +375,8 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 			st = append(st, RECAPTCHAREQUIRED)
 		case "recaptchaRejected":
 			st = append(st, RECAPTCHAREJECTED)
+		case "commonLikes":
+			st = append(st, COMMONLIKES)
 		default:
 			continue
 		}
