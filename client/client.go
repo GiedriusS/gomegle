@@ -163,7 +163,7 @@ func main() {
 			case gomegle.RECAPTCHAREJECTED:
 				fmt.Printf("%% The reCAPTCHA was rejected (%s)", msg[i][0])
 			case gomegle.COMMONLIKES:
-				j := 1
+				j := 0
 				fmt.Printf("%% Shared topics:")
 				for j < len(msg[i]) {
 					fmt.Printf(" %s", msg[i][j])

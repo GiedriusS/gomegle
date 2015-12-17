@@ -387,6 +387,12 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 				messages = append(messages, str)
 			} else if fl, ok := arr[i].(float64); ok {
 				messages = append(messages, fmt.Sprintf("%f", fl))
+			} else if strm, ok := arr[i].([]interface{}); ok {
+				for j := 0; j < len(strm); j++ {
+					if str, ok := strm[j].(string); ok {
+						messages = append(messages, str)
+					}
+				}
 			}
 		}
 		msg = append(msg, messages)
