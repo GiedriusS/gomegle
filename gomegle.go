@@ -215,7 +215,7 @@ func (o *Omegle) getidUnlocked() (id string, err error) {
 		}
 	} else if o.CollegeAuth != "" {
 		params = append(params, "college", "college_auth")
-		args = append(args, o.College, o.College_auth)
+		args = append(args, o.College, o.CollegeAuth)
 		if o.AnyCollege == true {
 			params = append(params, "any_college")
 			args = append(args, "1")
