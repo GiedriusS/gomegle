@@ -586,10 +586,7 @@ func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err
 	params = append(params, "log")
 	args = append(args, string(logsStr))
 
-	old := o.Server
-	o.Server = "logs"
-	resp, err := postRequest(o.buildURL(generateCmd), params, args)
-	o.Server = old
+	resp, err := postRequest("http://logs.omegle.com/"+generateCmd, params, args)
 	if err != nil {
 		return "", err
 	}
