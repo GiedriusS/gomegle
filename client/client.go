@@ -73,9 +73,9 @@ func main() {
 		o.Server = *server
 	}
 
-	o.College_auth = *collegeAuth
+	o.CollegeAuth = *collegeAuth
 	o.College = *college
-	o.Any_college = *anyCollege
+	o.AnyCollege = *anyCollege
 	o.Question = *question
 	o.Cansavequestion = *cansavequestion
 	o.Wantsspy = *wantsspy
