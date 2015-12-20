@@ -62,6 +62,9 @@ func main() {
 	cansavequestion := flag.Bool("cansavequestion", false, "If true then in \"spyer\" mode omegle will be permitted to re-use your question")
 	wantsspy := flag.Bool("wantsspy", false, "If true then \"spyee\" mode is started")
 	asl := flag.String("asl", "", "If not empty then this message will be sent as soon as you start talking to a stranger")
+	college_auth := flag.String("collegeauth", "", "If not empty then will be used as college authentication code")
+	college := flag.String("college", "", "If not empty then will be used as college authentication name (must match real college name)")
+	any_college := flag.Bool("anycollege", false, "If true then in college mode we will try to connect to any college")
 	flag.Parse()
 
 	exit := make(chan int)
@@ -70,17 +73,16 @@ func main() {
 		o.Server = *server
 	}
 
-	if *question != "" {
-		o.Question = *question
-		o.Cansavequestion = *cansavequestion
-	} else if *wantsspy != false {
-		o.Wantsspy = *wantsspy
-	} else {
-		o.Lang = *lang
-		o.Group = *group
-		if *topics != "" {
-			o.Topics = strings.Split(*topics, ",")
-		}
+	o.College_auth = *college_auth
+	o.College = *college
+	o.Any_college = *any_college
+	o.Question = *question
+	o.Cansavequestion = *cansavequestion
+	o.Wantsspy = *wantsspy
+	o.Lang = *lang
+	o.Group = *group
+	if *topics != "" {
+		o.Topics = strings.Split(*topics, ",")
 	}
 
 	ret := o.GetID()
@@ -159,9 +161,11 @@ func main() {
 			case gomegle.SERVERMESSAGE:
 				fmt.Printf("%% %s\n", msg[i][0])
 			case gomegle.RECAPTCHAREQUIRED:
-				fmt.Printf("%% You need to go to the omegle website to enter a reCAPTCHA (%s)", msg[i][0])
+				fmt.Printf("%% You need to go to the omegle website to enter a reCAPTCHA (%s)\n", msg[i][0])
 			case gomegle.RECAPTCHAREJECTED:
-				fmt.Printf("%% The reCAPTCHA was rejected (%s)", msg[i][0])
+				fmt.Printf("%% The reCAPTCHA was rejected (%s)\n", msg[i][0])
+			case gomegle.PARTNERCOLLEGE:
+				fmt.Printf("%% Partner college: %s\n", msg[i][0])
 			case gomegle.COMMONLIKES:
 				j := 0
 				fmt.Printf("%% Shared topics:")
