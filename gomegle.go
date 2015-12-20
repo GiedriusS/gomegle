@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ const (
 	statusCmd                    = "status"
 	stoplookingforcommonlikesCmd = "stoplookingforcommonlikes"
 	recaptchaCmd                 = "recaptcha"
+	generateCmd                  = "generate"
 )
 
 // Types of events UpdateEvents() will return
@@ -511,4 +513,91 @@ func (o *Omegle) Recaptcha(challenge, response string) error {
 		return &omegleErr{"returned \"fail\", expected something else", resp}
 	}
 	return err
+}
+
+// Saves the next constants used in LogEntry
+type tp int
+
+// Available log entry types for Generate(). The parantheses next to the
+// constants show which arguments are used, if any.
+const (
+	DEF    = iota // smaller, bold font, gray (Arg1)
+	Q             // blue question box (Arg1)
+	STR           // large font, first item is red (Arg1)
+	STR1          // as above (Arg1)
+	STR2          // large font, first item is blue (Arg1)
+	YOU           // as above (Arg1)
+	NORMAL        // normal font, first item is bold (Arg1, Arg2)
+)
+
+// LogEntry stores information needed for one entry
+type LogEntry struct {
+	Tp         tp
+	Arg1, Arg2 string
+}
+
+// Generate sends a request to generate a log file to omegle and returns the image link.
+func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err error) {
+	if strings.TrimSpace(identdigests) == "" {
+		return "", &omegleErr{"identdigests is empty", ""}
+	}
+	if o.getID() == "" {
+		return "", &omegleErr{"no conversation has been started (id == \"\")", ""}
+	}
+	o.generateRandID()
+	params := []string{"randid", "identdigests", "host"}
+	args := []string{o.randid, identdigests, "1"}
+
+	if len(o.Topics) != 0 {
+		b, err := json.Marshal(o.Topics)
+		if err != nil {
+			return "", err
+		}
+		params = append(params, "topics")
+		args = append(args, string(b))
+	}
+
+	logsSlice := [][]string{}
+	for _, val := range logs {
+		switch val.Tp {
+		case DEF:
+			logsSlice = append(logsSlice, []string{val.Arg1})
+		case Q:
+			logsSlice = append(logsSlice, []string{"Question to discuss:", val.Arg1})
+		case STR:
+			logsSlice = append(logsSlice, []string{"Stranger:", val.Arg1})
+		case STR1:
+			logsSlice = append(logsSlice, []string{"Stranger 1:", val.Arg1})
+		case STR2:
+			logsSlice = append(logsSlice, []string{"Stranger 2:", val.Arg1})
+		case YOU:
+			logsSlice = append(logsSlice, []string{"You:", val.Arg1})
+		case NORMAL:
+			logsSlice = append(logsSlice, []string{val.Arg1, val.Arg2})
+		default:
+			continue
+		}
+	}
+
+	logsStr, err := json.Marshal(logsSlice)
+	if err != nil {
+		return "", err
+	}
+	params = append(params, "log")
+	args = append(args, string(logsStr))
+
+	old := o.Server
+	o.Server = "logs"
+	resp, err := postRequest(o.buildURL(generateCmd), params, args)
+	o.Server = old
+	if err != nil {
+		return "", err
+	}
+
+	re := regexp.MustCompile(`http://l\.[Oo]megle\.com/.*\.png`)
+	link := re.FindString(resp)
+	if link == "" {
+		return "", &omegleErr{"can't find link to log picture", resp}
+	}
+	return link, nil
 }

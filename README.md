@@ -9,7 +9,7 @@ protocol. Also, it must include an example client for basic interaction
 |                            | Implemented | Error checking |
 |----------------------------|-------------|----------------|
 | /stoplookingforcommonlikes | yes         | yes            |
-| /generate                  | no          | no             |
+| /generate                  | yes         | yes            |
 | /send                      | yes         | yes            |
 | /status                    | yes         | yes            |
 | /typing                    | yes         | yes            |

@@ -182,3 +182,46 @@ func TestRecaptcha(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestGenerate(t *testing.T) {
+	var o Omegle
+	o.Topics = []string{"pizza"}
+	err := o.GetID()
+	if err != nil {
+		t.Error(err)
+	}
+
+	id := ""
+	tries := 0
+	for tries < 100 && id == "" {
+		st, msg, err := o.UpdateEvents()
+		if err != nil {
+			t.Error(err)
+		}
+
+		for k, v := range st {
+			if v == IDENTDIGESTS {
+				id = msg[k][0]
+				break
+			}
+		}
+		tries++
+	}
+
+	if id == "" {
+		t.Error("no ident digest found")
+	}
+
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
+	}
+
+	url, err := o.Generate(id, []LogEntry{{DEF, "gomegle", "ignored"}, {Q, "shall not be any text ignored", "ignored"},
+		{STR, "aaa", "ignored"}, {STR1, "bbb", "ignored"}, {STR2, "ccc", "ignored"},
+		{YOU, "ddd", "ignored"}, {NORMAL, "normal1", "normal2"}})
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(url)
+}
