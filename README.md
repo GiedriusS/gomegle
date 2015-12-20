@@ -24,4 +24,5 @@ Part of this library is based on this awesome [document](https://gist.github.com
 
 # FAQ
 * How can I get "statusInfo" event from UpdateEvents()
+
 You can't because a simple string slice isn't expressive enough to properly store info returned in that object. Thus, we ask you to explicitly ask for status information via GetStatus().
