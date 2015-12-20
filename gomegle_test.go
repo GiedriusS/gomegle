@@ -229,3 +229,23 @@ func TestGenerate(t *testing.T) {
 	}
 	t.Log(url)
 }
+
+func TestBuildURL(t *testing.T) {
+	var o Omegle
+	if o.buildURL("test") != "http://omegle.com/test" {
+		t.Error("got wrong URL")
+	}
+	o.Server = "test"
+	if o.buildURL("test") != "http://test.omegle.com/test" {
+		t.Error("got wrong URL")
+	}
+}
+
+func TestOmegleError(t *testing.T) {
+	var err omegleErr
+	one := err.Error()
+	err.buf = "test"
+	if one == err.Error() {
+		t.Error("got the same error twice")
+	}
+}
