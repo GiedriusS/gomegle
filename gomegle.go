@@ -53,6 +53,8 @@ const (
 	// Recaptcha()
 	RECAPTCHAREQUIRED
 	RECAPTCHAREJECTED
+	// Only in college mode, the stranger's college
+	PARTNERCOLLEGE
 )
 
 // Event is a type used for storing the above event codes
@@ -84,6 +86,9 @@ type Omegle struct {
 	Wantsspy        bool       // Optional, if true then "spyee" mode is started
 	Topics          []string   // Optional, if not empty will look only for people interested in these topics
 	randid          string     // Private member, random string of 8 chars length with 2-9 and A-Z
+	College         string     // Optional, if not empty must exactly match the college identifier as on omegle.com (such as "ktu.edu")
+	College_auth    string     // Optional, if not empty then used as identifier of your college. You need to get this from omegle.com
+	Any_college     bool       // Optional, if in college mode then it will connect you to any college
 }
 
 // Status stores information about omegle status
@@ -207,6 +212,22 @@ func (o *Omegle) getidUnlocked() (id string, err error) {
 		if o.Cansavequestion == true {
 			params = append(params, "cansavequestion")
 			args = append(args, "1")
+		}
+	} else if o.College_auth != "" {
+		params = append(params, "college", "college_auth")
+		args = append(args, o.College, o.College_auth)
+		if o.Any_college == true {
+			params = append(params, "any_college")
+			args = append(args, "1")
+		}
+		b, err := json.Marshal(o.Topics)
+		if err != nil {
+			return "", err
+		}
+		if len(o.Topics) != 0 {
+			topics := string(b)
+			params = append(params, "topics")
+			args = append(args, topics)
 		}
 	} else {
 		b, err := json.Marshal(o.Topics)
@@ -379,6 +400,8 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 			st = append(st, RECAPTCHAREJECTED)
 		case "commonLikes":
 			st = append(st, COMMONLIKES)
+		case "partnerCollege":
+			st = append(st, PARTNERCOLLEGE)
 		default:
 			continue
 		}
