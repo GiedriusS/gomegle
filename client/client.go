@@ -62,9 +62,9 @@ func main() {
 	cansavequestion := flag.Bool("cansavequestion", false, "If true then in \"spyer\" mode omegle will be permitted to re-use your question")
 	wantsspy := flag.Bool("wantsspy", false, "If true then \"spyee\" mode is started")
 	asl := flag.String("asl", "", "If not empty then this message will be sent as soon as you start talking to a stranger")
-	college_auth := flag.String("collegeauth", "", "If not empty then will be used as college authentication code")
+	collegeAuth := flag.String("collegeauth", "", "If not empty then will be used as college authentication code")
 	college := flag.String("college", "", "If not empty then will be used as college authentication name (must match real college name)")
-	any_college := flag.Bool("anycollege", false, "If true then in college mode we will try to connect to any college")
+	anyCollege := flag.Bool("anycollege", false, "If true then in college mode we will try to connect to any college")
 	flag.Parse()
 
 	exit := make(chan int)
@@ -73,9 +73,9 @@ func main() {
 		o.Server = *server
 	}
 
-	o.College_auth = *college_auth
+	o.College_auth = *collegeAuth
 	o.College = *college
-	o.Any_college = *any_college
+	o.Any_college = *anyCollege
 	o.Question = *question
 	o.Cansavequestion = *cansavequestion
 	o.Wantsspy = *wantsspy

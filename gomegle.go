@@ -87,8 +87,8 @@ type Omegle struct {
 	Topics          []string   // Optional, if not empty will look only for people interested in these topics
 	randid          string     // Private member, random string of 8 chars length with 2-9 and A-Z
 	College         string     // Optional, if not empty must exactly match the college identifier as on omegle.com (such as "ktu.edu")
-	College_auth    string     // Optional, if not empty then used as identifier of your college. You need to get this from omegle.com
-	Any_college     bool       // Optional, if in college mode then it will connect you to any college
+	CollegeAuth     string     // Optional, if not empty then used as identifier of your college. You need to get this from omegle.com
+	AnyCollege      bool       // Optional, if in college mode then it will connect you to any college
 }
 
 // Status stores information about omegle status
@@ -213,10 +213,10 @@ func (o *Omegle) getidUnlocked() (id string, err error) {
 			params = append(params, "cansavequestion")
 			args = append(args, "1")
 		}
-	} else if o.College_auth != "" {
+	} else if o.CollegeAuth != "" {
 		params = append(params, "college", "college_auth")
 		args = append(args, o.College, o.College_auth)
-		if o.Any_college == true {
+		if o.AnyCollege == true {
 			params = append(params, "any_college")
 			args = append(args, "1")
 		}
