@@ -403,6 +403,9 @@ func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 		case "partnerCollege":
 			st = append(st, PARTNERCOLLEGE)
 		case "statusInfo":
+			if len(arr) < 2 {
+				continue
+			}
 			data, ok := arr[1].(map[string]interface{})
 			if !ok {
 				continue
