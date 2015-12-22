@@ -98,7 +98,11 @@ func main() {
 		}
 
 		for i := range st {
-			switch st[i] {
+			num, ok := st[i].(int)
+			if !ok {
+				continue
+			}
+			switch num {
 			case gomegle.ANTINUDEBANNED:
 				fmt.Printf("%% You have been banned for possible bad behaviour!\n")
 				fmt.Printf("%% Pass -group=\"unmon\" to join unmonitored chat\n")

@@ -322,27 +322,27 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 }
 
 // UpdateEvents visits the events page and gathers new events
-func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
+func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 	if o.getID() == "" {
-		return []Event{}, [][]string{}, &omegleErr{"id is empty", ""}
+		return st, [][]string{}, &omegleErr{"id is empty", ""}
 	}
 
 	ret, err := postRequest(o.buildURL(eventCmd), []string{"id"}, []string{o.getID()})
 	if err != nil {
-		return []Event{}, [][]string{}, err
+		return st, [][]string{}, err
 	}
 	if ret == "[]" || ret == "null" {
-		return []Event{}, [][]string{}, nil
+		return st, [][]string{}, nil
 	}
 
 	var otpt interface{}
 	err = json.Unmarshal([]byte(ret), &otpt)
 	if err != nil {
-		return []Event{}, [][]string{}, err
+		return st, [][]string{}, err
 	}
 	data, ok := otpt.([]interface{})
 	if ok == false {
-		return []Event{}, [][]string{}, &omegleErr{"invalid json (root element must be an array)", ret}
+		return st, [][]string{}, &omegleErr{"invalid json (root element must be an array)", ret}
 	}
 
 	for _, dv := range data {
@@ -427,7 +427,7 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 		return st, msg, nil
 	}
 
-	return []Event{}, [][]string{}, &omegleErr{"unknown error", ret}
+	return st, [][]string{}, &omegleErr{"unknown error", ret}
 }
 
 // parseStatus parses status from response string
