@@ -430,21 +430,17 @@ func (o *Omegle) UpdateEvents() (st []Event, msg [][]string, err error) {
 	return []Event{}, [][]string{}, &omegleErr{"unknown error", ret}
 }
 
-// GetStatus gets status of omegle via http://[server].omegle.com/status
-func (o *Omegle) GetStatus() (st Status, err error) {
-	o.generateRandID()
-	resp, err := getRequest(o.buildURL(statusCmd), []string{"randid"}, []string{o.randid})
-	if err != nil {
-		return Status{}, err
-	}
+// parseStatus parses status from response string
+func parseStatus(resp string) (st Status, err error) {
 	var otpt interface{}
 	err = json.Unmarshal([]byte(resp), &otpt)
 	if err != nil {
 		return Status{}, err
 	}
+
 	data, ok := otpt.(map[string]interface{})
 	if ok == false {
-		return Status{}, &omegleErr{"status didn't return an JSON object", resp}
+		return Status{}, &omegleErr{"failed to find an JSON object", resp}
 	}
 
 	if num, ok := data["count"].(float64); ok {
@@ -505,6 +501,16 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 		return st, &omegleErr{"failed to parse servers", resp}
 	}
 	return
+}
+
+// GetStatus gets status of omegle via http://[server].omegle.com/status
+func (o *Omegle) GetStatus() (st Status, err error) {
+	o.generateRandID()
+	resp, err := getRequest(o.buildURL(statusCmd), []string{"randid"}, []string{o.randid})
+	if err != nil {
+		return Status{}, err
+	}
+	return parseStatus(resp)
 }
 
 // StopLookingForCommonLikes stops looking for strangers only interested in specified topics
