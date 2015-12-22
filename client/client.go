@@ -98,16 +98,16 @@ func main() {
 		}
 
 		for i := range st {
-			num, ok_int := st[i].(int)
-			status, ok_status := st[i].(gomegle.Status)
+			num, okInt := st[i].(int)
+			status, okStatus := st[i].(gomegle.Status)
 
-			if ok_status {
+			if okStatus {
 				fmt.Printf("%% Got server event. Count: %v; Force_unmon: %v; SpyQueueTime: %v; SpyeeQueueTime: %v\n",
 					status.Count, status.ForceUnmon, status.SpyQueueTime, status.SpyeeQueueTime)
 				continue
 			}
 
-			if !ok_int {
+			if !okInt {
 				continue
 			}
 
