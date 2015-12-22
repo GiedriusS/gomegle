@@ -140,15 +140,11 @@ func TestStopLookingForCommonLikes(t *testing.T) {
 	if err == nil {
 		t.Error("expected a error, got nil")
 	}
-	err = o.GetID()
-	if err != nil {
-		t.Error(err)
-	}
+	o.Topics = []string{"pizza"}
 	err = o.StopLookingForCommonLikes()
 	if err == nil {
 		t.Error("expected a error, got nil")
 	}
-	o.Topics = []string{"Pizza"}
 	err = o.GetID()
 	if err != nil {
 		t.Error(err)
@@ -190,6 +186,10 @@ func TestGenerate(t *testing.T) {
 	if err == nil {
 		t.Error("expected err, got nil")
 	}
+	_, err = o.Generate("", []LogEntry{})
+	if err == nil {
+		t.Error("expected err, got nil")
+	}
 	err = o.GetID()
 	if err != nil {
 		t.Error(err)
@@ -223,7 +223,7 @@ func TestGenerate(t *testing.T) {
 
 	url, err := o.Generate(id, []LogEntry{{DEF, "gomegle", "ignored"}, {Q, "shall not be any text ignored", "ignored"},
 		{STR, "aaa", "ignored"}, {STR1, "bbb", "ignored"}, {STR2, "ccc", "ignored"},
-		{YOU, "ddd", "ignored"}, {NORMAL, "normal1", "normal2"}})
+		{YOU, "ddd", "ignored"}, {NORMAL, "normal1", "normal2"}, {-100, "", ""}})
 	if err != nil {
 		t.Error(err)
 	}
