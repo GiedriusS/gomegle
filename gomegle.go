@@ -402,6 +402,18 @@ func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 			st = append(st, COMMONLIKES)
 		case "partnerCollege":
 			st = append(st, PARTNERCOLLEGE)
+		case "statusInfo":
+			data, ok := arr[1].(map[string]interface{})
+			if !ok {
+				continue
+			}
+			parsed, err := parseStatus(data)
+			if err != nil {
+				continue
+			}
+			st = append(st, parsed)
+			msg = append(msg, []string{})
+			continue
 		default:
 			continue
 		}
@@ -430,8 +442,8 @@ func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 	return st, [][]string{}, &omegleErr{"unknown error", ret}
 }
 
-// parseStatus parses status from response string
-func parseStatus(resp string) (st Status, err error) {
+// convertAndParse parses status from a string
+func convertAndParse(resp string) (st Status, err error) {
 	var otpt interface{}
 	err = json.Unmarshal([]byte(resp), &otpt)
 	if err != nil {
@@ -442,19 +454,23 @@ func parseStatus(resp string) (st Status, err error) {
 	if ok == false {
 		return Status{}, &omegleErr{"failed to find an JSON object", resp}
 	}
+	return parseStatus(data)
+}
 
+// parseStatus parses status from a map[string]interface{}
+func parseStatus(data map[string]interface{}) (st Status, err error) {
 	if num, ok := data["count"].(float64); ok {
 		st.Count = int(num)
 	} else {
-		return st, &omegleErr{"failed to parse count", resp}
+		return st, &omegleErr{"failed to parse count", ""}
 	}
 
-	if data, ok := data["force_unmon"].(bool); ok {
-		st.ForceUnmon = data
+	if d, ok := data["force_unmon"].(bool); ok {
+		st.ForceUnmon = d
 	}
 
-	if data, ok := data["antinudeservers"].([]interface{}); ok {
-		for _, elem := range data {
+	if d, ok := data["antinudeservers"].([]interface{}); ok {
+		for _, elem := range d {
 			if str, ok := elem.(string); ok {
 				st.Antinudeservers = append(st.Antinudeservers, str)
 			}
@@ -462,35 +478,35 @@ func parseStatus(resp string) (st Status, err error) {
 	}
 
 	if len(st.Antinudeservers) == 0 {
-		return st, &omegleErr{"failed to parse antinudeservers", resp}
+		return st, &omegleErr{"failed to parse antinudeservers", ""}
 	}
 
 	if num, ok := data["antinudepercent"].(float64); ok {
 		st.Antinudepercent = num
 	} else {
-		return st, &omegleErr{"failed to parse antinudepercent", resp}
+		return st, &omegleErr{"failed to parse antinudepercent", ""}
 	}
 
 	if num, ok := data["spyeeQueueTime"].(float64); ok {
 		st.SpyeeQueueTime = num
 	} else {
-		return st, &omegleErr{"failed to parse spyeeQueueTime", resp}
+		return st, &omegleErr{"failed to parse spyeeQueueTime", ""}
 	}
 
 	if num, ok := data["spyQueueTime"].(float64); ok {
 		st.SpyQueueTime = num
 	} else {
-		return st, &omegleErr{"failed to parse spyQueueTime", resp}
+		return st, &omegleErr{"failed to parse spyQueueTime", ""}
 	}
 
 	if num, ok := data["timestamp"].(float64); ok {
 		st.Timestamp = num
 	} else {
-		return st, &omegleErr{"failed to parse timestamp", resp}
+		return st, &omegleErr{"failed to parse timestamp", ""}
 	}
 
-	if data, ok := data["servers"].([]interface{}); ok {
-		for _, elem := range data {
+	if d, ok := data["servers"].([]interface{}); ok {
+		for _, elem := range d {
 			if str, ok := elem.(string); ok {
 				st.Servers = append(st.Servers, str)
 			}
@@ -498,7 +514,7 @@ func parseStatus(resp string) (st Status, err error) {
 	}
 
 	if len(st.Servers) == 0 {
-		return st, &omegleErr{"failed to parse servers", resp}
+		return st, &omegleErr{"failed to parse servers", ""}
 	}
 	return
 }
@@ -510,7 +526,7 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 	if err != nil {
 		return Status{}, err
 	}
-	return parseStatus(resp)
+	return convertAndParse(resp)
 }
 
 // StopLookingForCommonLikes stops looking for strangers only interested in specified topics
