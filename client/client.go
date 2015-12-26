@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func messageListener(o *gomegle.Omegle, quit chan int) {
+func messageListener(o *gomegle.Omegle, quit chan int, logger *log.Logger) {
 	for {
 		select {
 		case <-quit:
@@ -20,7 +20,7 @@ func messageListener(o *gomegle.Omegle, quit chan int) {
 		}
 		err := o.ShowTyping()
 		if err != nil {
-			log.Print(err)
+			logger.Print(err)
 			continue
 		}
 
@@ -29,24 +29,24 @@ func messageListener(o *gomegle.Omegle, quit chan int) {
 		if err != nil {
 			err = o.Disconnect()
 			if err != nil {
-				log.Fatal(err)
+				logger.Fatal(err)
 			}
 			fmt.Println("- Disconnected...")
 			ret := o.GetID()
 			if ret != nil {
-				log.Fatal(ret)
+				logger.Fatal(ret)
 			}
 			continue
 		}
 
 		err = o.StopTyping()
 		if err != nil {
-			log.Print(err)
+			logger.Print(err)
 			continue
 		}
 		err = o.SendMessage(text)
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 			continue
 		}
 	}
@@ -66,6 +66,8 @@ func main() {
 	college := flag.String("college", "", "If not empty then will be used as college authentication name (must match real college name)")
 	anyCollege := flag.Bool("anycollege", false, "If true then in college mode we will try to connect to any college")
 	flag.Parse()
+
+	logger := log.New(os.Stderr, "client", log.LstdFlags)
 
 	exit := make(chan int)
 
@@ -87,14 +89,14 @@ func main() {
 
 	ret := o.GetID()
 	if ret != nil {
-		log.Fatal(ret)
+		logger.Fatal(ret)
 	}
-	go messageListener(&o, exit)
+	go messageListener(&o, exit, logger)
 
 	for {
 		st, msg, err := o.UpdateEvents()
 		if err != nil {
-			log.Fatal(err)
+			logger.Fatal(err)
 		}
 
 		for i := range st {
@@ -125,7 +127,7 @@ func main() {
 				if *asl != "" && *question == "" && *wantsspy == false {
 					err = o.SendMessage(*asl)
 					if err != nil {
-						log.Print(err)
+						logger.Print(err)
 					}
 				}
 			case gomegle.DISCONNECTED:
@@ -133,7 +135,7 @@ func main() {
 				ret := o.GetID()
 				if ret != nil {
 					exit <- 1
-					log.Fatal(ret)
+					logger.Fatal(ret)
 				}
 			case gomegle.TYPING:
 				fmt.Println("> Stranger is typing")
@@ -148,7 +150,7 @@ func main() {
 				ret := o.GetID()
 				if ret != nil {
 					exit <- 1
-					log.Fatal(ret)
+					logger.Fatal(ret)
 				}
 			case gomegle.SPYMESSAGE:
 				fmt.Printf("%s: %s\n", msg[i][0], msg[i][1])
@@ -161,7 +163,7 @@ func main() {
 				ret := o.GetID()
 				if ret != nil {
 					exit <- 1
-					log.Fatal(ret)
+					logger.Fatal(ret)
 				}
 			case gomegle.ERROR:
 				fmt.Printf("- Error: %s (sleeping 500ms)\n", msg[i][0])
@@ -169,7 +171,7 @@ func main() {
 				ret := o.GetID()
 				if ret != nil {
 					exit <- 1
-					log.Fatal(ret)
+					logger.Fatal(ret)
 				}
 			case gomegle.SERVERMESSAGE:
 				fmt.Printf("%% %s\n", msg[i][0])
