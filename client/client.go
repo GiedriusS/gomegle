@@ -67,7 +67,7 @@ func main() {
 	anyCollege := flag.Bool("anycollege", false, "If true then in college mode we will try to connect to any college")
 	flag.Parse()
 
-	logger := log.New(os.Stderr, "client", log.LstdFlags)
+	logger := log.New(os.Stderr, "", log.LstdFlags)
 
 	exit := make(chan int)
 
