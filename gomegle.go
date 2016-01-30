@@ -563,8 +563,8 @@ func (o *Omegle) Recaptcha(challenge, response string) error {
 	return err
 }
 
-// Saves the next constants used in LogEntry
-type tp int
+// Saves the following constants used in LogEntry
+type Tp int
 
 // Available log entry types for Generate(). The parantheses next to the
 // constants show which arguments are used, if any.
@@ -580,7 +580,7 @@ const (
 
 // LogEntry stores information needed for one entry
 type LogEntry struct {
-	Tp         tp
+	Tp         Tp
 	Arg1, Arg2 string
 }
 
