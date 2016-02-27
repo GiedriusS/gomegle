@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var random *rand.Rand // private RNG
+
 // Various commands sent to the omegle servers
 const (
 	startCmd                     = "start"
@@ -190,9 +192,8 @@ func (o *Omegle) generateRandID() {
 	if len(o.randid) != 0 {
 		return
 	}
-	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 8; i++ {
-		o.randid += string(chars[rand.Intn(len(chars))])
+		o.randid += string(chars[random.Intn(len(chars))])
 	}
 }
 
@@ -645,4 +646,8 @@ func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err
 		return "", &omegleErr{"can't find link to log picture", resp}
 	}
 	return link, nil
+}
+
+func init() {
+	random = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
