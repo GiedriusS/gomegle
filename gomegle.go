@@ -78,19 +78,19 @@ func (e *omegleErr) Error() string {
 
 // Omegle stores information about the connection to omegle.com
 type Omegle struct {
-	id              string     // Private member used for identifying ourselves to omegle
-	Lang            string     // Optional, two character language code
-	Group           string     // Optional, "unmon" to join unmonitored chat
-	Server          string     // Optional, can specify a certain server to use
-	idM             sync.Mutex // Private member used for synchronising access to id
-	Question        string     // Optional, if not empty used as the question in "spyer" mode
-	Cansavequestion bool       // Optional, if question is not "" then permit omegle to save the question
-	Wantsspy        bool       // Optional, if true then "spyee" mode is started
-	Topics          []string   // Optional, if not empty will look only for people interested in these topics
-	randid          string     // Private member, random string of 8 chars length with 2-9 and A-Z
-	College         string     // Optional, if not empty must exactly match the college identifier as on omegle.com (such as "ktu.edu")
-	CollegeAuth     string     // Optional, if not empty then used as identifier of your college. You need to get this from omegle.com
-	AnyCollege      bool       // Optional, if in college mode then it will connect you to any college
+	id              string       // Private member used for identifying ourselves to omegle
+	Lang            string       // Optional, two character language code
+	Group           string       // Optional, "unmon" to join unmonitored chat
+	Server          string       // Optional, can specify a certain server to use
+	idM             sync.RWMutex // Private member used for synchronising access to id
+	Question        string       // Optional, if not empty used as the question in "spyer" mode
+	Cansavequestion bool         // Optional, if question is not "" then permit omegle to save the question
+	Wantsspy        bool         // Optional, if true then "spyee" mode is started
+	Topics          []string     // Optional, if not empty will look only for people interested in these topics
+	randid          string       // Private member, random string of 8 chars length with 2-9 and A-Z
+	College         string       // Optional, if not empty must exactly match the college identifier as on omegle.com (such as "ktu.edu")
+	CollegeAuth     string       // Optional, if not empty then used as identifier of your college. You need to get this from omegle.com
+	AnyCollege      bool         // Optional, if in college mode then it will connect you to any college
 }
 
 // Status stores information about omegle status
@@ -124,8 +124,8 @@ func (o *Omegle) setID(id string) {
 
 // Get the id
 func (o *Omegle) getID() (id string) {
-	defer o.idM.Unlock()
-	o.idM.Lock()
+	defer o.idM.RUnlock()
+	o.idM.RLock()
 	id = o.id
 	return
 }
