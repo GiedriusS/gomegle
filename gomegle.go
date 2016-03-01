@@ -185,13 +185,14 @@ func getRequest(link string, parameters []string, values []string) (body string,
 	return string(ret), nil
 }
 
-const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
-
 // generateRandID generates a random id and stores it if o.randid is not empty
 func (o *Omegle) generateRandID() {
 	if len(o.randid) != 0 {
 		return
 	}
+
+	// Extracted from omegle source code
+	const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 	for i := 0; i < 8; i++ {
 		o.randid += string(chars[random.Intn(len(chars))])
 	}
