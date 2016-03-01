@@ -31,7 +31,7 @@ func messageListener(o *gomegle.Omegle, quit chan int, logger *log.Logger) {
 			if err != nil {
 				logger.Fatal(err)
 			}
-			fmt.Println("- Disconnected...")
+			fmt.Println("- Disconnected")
 			ret := o.GetID()
 			if ret != nil {
 				logger.Fatal(ret)
@@ -123,15 +123,16 @@ func main() {
 			case gomegle.WAITING:
 				fmt.Println("> Waiting...")
 			case gomegle.CONNECTED:
-				fmt.Println("+ Connected...")
+				fmt.Println("+ Connected")
 				if *asl != "" && *question == "" && *wantsspy == false {
 					err = o.SendMessage(*asl)
+					fmt.Println("+ Sent ASL")
 					if err != nil {
 						logger.Print(err)
 					}
 				}
 			case gomegle.DISCONNECTED:
-				fmt.Println("- Disconnected...")
+				fmt.Println("- Disconnected")
 				ret := o.GetID()
 				if ret != nil {
 					exit <- 1
@@ -159,7 +160,7 @@ func main() {
 			case gomegle.STOPPEDTYPING:
 				fmt.Println("> Stranger stopped typing")
 			case gomegle.CONNECTIONDIED:
-				fmt.Println("- Error occured, disconnected...")
+				fmt.Println("- Error occured, disconnected")
 				ret := o.GetID()
 				if ret != nil {
 					exit <- 1
