@@ -64,16 +64,17 @@ type Event int
 
 // A private struct for storing errors
 type omegleErr struct {
-	err string
-	buf string // Buffer that could be used to store the returned result
+	method string // The method name in which the error occured
+	err    string // Actual error message
+	buf    string // Buffer that could be used to store the returned result
 }
 
 // Mandatory function to satisfy the interface
 func (e *omegleErr) Error() string {
 	if e.buf == "" {
-		return "Omegle: " + e.err
+		return "gomegle " + e.method + ": " + e.err
 	}
-	return "Omegle (" + e.buf + "): " + e.err
+	return "gomegle " + e.method + " (" + e.buf + "): " + e.err
 }
 
 // Omegle stores information about the connection to omegle.com
@@ -263,12 +264,12 @@ func (o *Omegle) GetID() (err error) {
 // ShowTyping shows to the stranger that we are typing
 func (o *Omegle) ShowTyping() (err error) {
 	if o.getID() == "" {
-		return &omegleErr{"id is empty", ""}
+		return &omegleErr{"ShowTyping", "id is empty", ""}
 	}
 
 	ret, err := postRequest(o.buildURL(typingCmd), []string{"id"}, []string{o.getID()})
 	if ret != "win" {
-		return &omegleErr{"returned something other than win", ret}
+		return &omegleErr{"ShowTyping", "returned something other than win", ret}
 	}
 	return
 }
@@ -276,12 +277,12 @@ func (o *Omegle) ShowTyping() (err error) {
 // StopTyping shows to the stranger that we stopped typing
 func (o *Omegle) StopTyping() (err error) {
 	if o.getID() == "" {
-		return &omegleErr{"id is empty", ""}
+		return &omegleErr{"StopTyping", "id is empty", ""}
 	}
 
 	ret, err := postRequest(o.buildURL(stoptypingCmd), []string{"id"}, []string{o.getID()})
 	if ret != "win" {
-		return &omegleErr{"returned something other than win", ret}
+		return &omegleErr{"StopTyping", "returned something other than win", ret}
 	}
 	return
 }
@@ -289,7 +290,7 @@ func (o *Omegle) StopTyping() (err error) {
 // Disconnect from the Omegle server
 func (o *Omegle) Disconnect() (err error) {
 	if o.getID() == "" {
-		return &omegleErr{"id is empty", ""}
+		return &omegleErr{"Disconnect", "id is empty", ""}
 	}
 	ret, err := postRequest(o.buildURL(disconnectCmd), []string{"id"}, []string{o.id})
 
@@ -297,7 +298,7 @@ func (o *Omegle) Disconnect() (err error) {
 		return
 	}
 	if ret != "win" {
-		return &omegleErr{"returned something other than win", ret}
+		return &omegleErr{"Disconnect", "returned something other than win", ret}
 	}
 
 	return nil
@@ -306,10 +307,10 @@ func (o *Omegle) Disconnect() (err error) {
 // SendMessage sends a message to the stranger
 func (o *Omegle) SendMessage(msg string) (err error) {
 	if o.getID() == "" {
-		return &omegleErr{"id is empty", ""}
+		return &omegleErr{"SendMessage", "id is empty", ""}
 	}
 	if msg == "" {
-		return &omegleErr{"msg is empty", ""}
+		return &omegleErr{"SendMessage", "msg is empty", ""}
 	}
 
 	ret, err := postRequest(o.buildURL(sendCmd), []string{"id", "msg"}, []string{o.getID(), msg})
@@ -317,7 +318,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 		return
 	}
 	if ret != "win" {
-		return &omegleErr{"returned something else than win", ret}
+		return &omegleErr{"SendMessage", "returned something else than win", ret}
 	}
 
 	return nil
@@ -326,7 +327,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 // UpdateEvents visits the events page and gathers new events
 func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 	if o.getID() == "" {
-		return st, [][]string{}, &omegleErr{"id is empty", ""}
+		return st, [][]string{}, &omegleErr{"UpdateEvents", "id is empty", ""}
 	}
 
 	ret, err := postRequest(o.buildURL(eventCmd), []string{"id"}, []string{o.getID()})
@@ -344,7 +345,7 @@ func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 	}
 	data, ok := otpt.([]interface{})
 	if ok == false {
-		return st, [][]string{}, &omegleErr{"invalid json (root element must be an array)", ret}
+		return st, [][]string{}, &omegleErr{"UpdateEvents", "invalid json (root element must be an array)", ret}
 	}
 
 	for _, dv := range data {
@@ -444,7 +445,7 @@ func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 		return st, msg, nil
 	}
 
-	return st, [][]string{}, &omegleErr{"unknown error", ret}
+	return st, [][]string{}, &omegleErr{"UpdateEvents", "unknown error", ret}
 }
 
 // convertAndParse parses status from a string
@@ -457,7 +458,7 @@ func convertAndParse(resp string) (st Status, err error) {
 
 	data, ok := otpt.(map[string]interface{})
 	if ok == false {
-		return Status{}, &omegleErr{"failed to find an JSON object", resp}
+		return Status{}, &omegleErr{"convertAndParse", "failed to find an JSON object", resp}
 	}
 	return parseStatus(data)
 }
@@ -467,7 +468,7 @@ func parseStatus(data map[string]interface{}) (st Status, err error) {
 	if num, ok := data["count"].(float64); ok {
 		st.Count = int(num)
 	} else {
-		return st, &omegleErr{"failed to parse count", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse count", ""}
 	}
 
 	if d, ok := data["force_unmon"].(bool); ok {
@@ -483,31 +484,31 @@ func parseStatus(data map[string]interface{}) (st Status, err error) {
 	}
 
 	if len(st.Antinudeservers) == 0 {
-		return st, &omegleErr{"failed to parse antinudeservers", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse antinudeservers", ""}
 	}
 
 	if num, ok := data["antinudepercent"].(float64); ok {
 		st.Antinudepercent = num
 	} else {
-		return st, &omegleErr{"failed to parse antinudepercent", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse antinudepercent", ""}
 	}
 
 	if num, ok := data["spyeeQueueTime"].(float64); ok {
 		st.SpyeeQueueTime = num
 	} else {
-		return st, &omegleErr{"failed to parse spyeeQueueTime", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse spyeeQueueTime", ""}
 	}
 
 	if num, ok := data["spyQueueTime"].(float64); ok {
 		st.SpyQueueTime = num
 	} else {
-		return st, &omegleErr{"failed to parse spyQueueTime", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse spyQueueTime", ""}
 	}
 
 	if num, ok := data["timestamp"].(float64); ok {
 		st.Timestamp = num
 	} else {
-		return st, &omegleErr{"failed to parse timestamp", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse timestamp", ""}
 	}
 
 	if d, ok := data["servers"].([]interface{}); ok {
@@ -519,7 +520,7 @@ func parseStatus(data map[string]interface{}) (st Status, err error) {
 	}
 
 	if len(st.Servers) == 0 {
-		return st, &omegleErr{"failed to parse servers", ""}
+		return st, &omegleErr{"parseStatus", "failed to parse servers", ""}
 	}
 	return
 }
@@ -537,17 +538,17 @@ func (o *Omegle) GetStatus() (st Status, err error) {
 // StopLookingForCommonLikes stops looking for strangers only interested in specified topics
 func (o *Omegle) StopLookingForCommonLikes() error {
 	if len(o.Topics) == 0 {
-		return &omegleErr{"topic list is empty", ""}
+		return &omegleErr{"StopLookingForCommonLikes", "topic list is empty", ""}
 	}
 	if o.getID() == "" {
-		return &omegleErr{"id is empty", ""}
+		return &omegleErr{"StopLookingForCommonLikes", "id is empty", ""}
 	}
 	resp, err := postRequest(o.buildURL(stoplookingforcommonlikesCmd), []string{"id"}, []string{o.getID()})
 	if err != nil {
 		return err
 	}
 	if resp != "win" {
-		return &omegleErr{"returned something other than win", resp}
+		return &omegleErr{"StopLookingForCommonLikes", "returned something other than win", resp}
 	}
 	return nil
 }
@@ -556,11 +557,11 @@ func (o *Omegle) StopLookingForCommonLikes() error {
 // Only to be used in case of recaptchaRequired or recaptchaRejected events
 func (o *Omegle) Recaptcha(challenge, response string) error {
 	if o.getID() == "" {
-		return &omegleErr{"id is empty", ""}
+		return &omegleErr{"Recaptcha", "id is empty", ""}
 	}
 	resp, err := postRequest(o.buildURL(recaptchaCmd), []string{"id", "challenge", "response"}, []string{o.getID(), challenge, response})
 	if resp == "fail" {
-		return &omegleErr{"returned \"fail\", expected something else", resp}
+		return &omegleErr{"Recaptcha", "returned \"fail\", expected something else", resp}
 	}
 	return err
 }
@@ -589,10 +590,10 @@ type LogEntry struct {
 // Generate sends a request to generate a log file to omegle and returns the image link.
 func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err error) {
 	if strings.TrimSpace(identdigests) == "" {
-		return "", &omegleErr{"identdigests is empty", ""}
+		return "", &omegleErr{"Generate", "identdigests is empty", ""}
 	}
 	if o.getID() == "" {
-		return "", &omegleErr{"no conversation has been started (id == \"\")", ""}
+		return "", &omegleErr{"Generate", "no conversation has been started (id == \"\")", ""}
 	}
 	o.generateRandID()
 	params := []string{"randid", "identdigests", "host"}
@@ -644,7 +645,7 @@ func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err
 	re := regexp.MustCompile(`http://l\.[Oo]megle\.com/.*\.png`)
 	link := re.FindString(resp)
 	if link == "" {
-		return "", &omegleErr{"can't find link to log picture", resp}
+		return "", &omegleErr{"Generate", "can't find link to log picture", resp}
 	}
 	return link, nil
 }

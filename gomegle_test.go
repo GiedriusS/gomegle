@@ -248,4 +248,9 @@ func TestOmegleError(t *testing.T) {
 	if one == err.Error() {
 		t.Error("got the same error twice")
 	}
+	two := err.Error()
+	err.method = "test"
+	if two == err.Error() {
+		t.Error("got the same error twice")
+	}
 }
