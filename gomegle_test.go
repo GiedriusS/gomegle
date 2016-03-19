@@ -254,3 +254,32 @@ func TestOmegleError(t *testing.T) {
 		t.Error("got the same error twice")
 	}
 }
+
+func TestDifferentModes(t *testing.T) {
+	var o Omegle
+	o.Wantsspy = true
+	err := o.GetID()
+	if err != nil {
+		t.Error("failed to get ID")
+	}
+	o.Wantsspy = false
+
+	o.Question = "Hello, world"
+	o.Cansavequestion = true
+	err = o.GetID()
+	if err != nil {
+		t.Error("failed to get ID")
+	}
+	o.Question = ""
+	o.Cansavequestion = false
+
+	o.College = "Test"
+	o.CollegeAuth = "abcdefgh"
+	o.AnyCollege = true
+	o.Topics = []string{"test"}
+
+	err = o.GetID()
+	if err != nil {
+		t.Error("failed to get ID")
+	}
+}
