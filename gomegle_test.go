@@ -221,9 +221,9 @@ func TestGenerate(t *testing.T) {
 		t.Error(err)
 	}
 
-	url, err := o.Generate(id, []LogEntry{{DEF, "gomegle", "ignored"}, {Q, "shall not be any text ignored", "ignored"},
-		{STR, "aaa", "ignored"}, {STR1, "bbb", "ignored"}, {STR2, "ccc", "ignored"},
-		{YOU, "ddd", "ignored"}, {NORMAL, "normal1", "normal2"}, {-100, "", ""}})
+	url, err := o.Generate(id, []LogEntry{{DEF, "gomegle", "ignored"}, {Q, "gomegle", "ignored"},
+		{STR, "gomegle", "ignored"}, {STR1, "gomegle", "ignored"}, {STR2, "gomegle", "ignored"},
+		{YOU, "gomegle", "ignored"}, {NORMAL, "gomegle1", "gomegle2"}, {-100, "ignored", "ignored"}})
 	if err != nil {
 		t.Error(err)
 	}
