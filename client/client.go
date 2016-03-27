@@ -11,13 +11,8 @@ import (
 	"time"
 )
 
-func messageListener(o *gomegle.Omegle, quit chan int, logger *log.Logger) {
+func messageListener(o *gomegle.Omegle, logger *log.Logger) {
 	for {
-		select {
-		case <-quit:
-			os.Exit(1)
-		default:
-		}
 		err := o.ShowTyping()
 		if err != nil {
 			logger.Print(err)
@@ -69,8 +64,6 @@ func main() {
 
 	logger := log.New(os.Stderr, "", log.LstdFlags)
 
-	exit := make(chan int)
-
 	if *server != "" {
 		o.Server = *server
 	}
@@ -91,7 +84,7 @@ func main() {
 	if ret != nil {
 		logger.Fatal(ret)
 	}
-	go messageListener(&o, exit, logger)
+	go messageListener(&o, logger)
 
 	for {
 		st, msg, err := o.UpdateEvents()
@@ -117,7 +110,6 @@ func main() {
 			case gomegle.ANTINUDEBANNED:
 				fmt.Printf("%% You have been banned for possible bad behaviour!\n")
 				fmt.Printf("%% Pass -group=\"unmon\" to join unmonitored chat\n")
-				exit <- 1
 				os.Exit(1)
 				return
 			case gomegle.WAITING:
@@ -135,7 +127,6 @@ func main() {
 				fmt.Println("- Disconnected")
 				ret := o.GetID()
 				if ret != nil {
-					exit <- 1
 					logger.Fatal(ret)
 				}
 			case gomegle.TYPING:
@@ -150,7 +141,6 @@ func main() {
 				fmt.Printf("> %s disconnected\n", msg[i][0])
 				ret := o.GetID()
 				if ret != nil {
-					exit <- 1
 					logger.Fatal(ret)
 				}
 			case gomegle.SPYMESSAGE:
@@ -163,7 +153,6 @@ func main() {
 				fmt.Println("- Error occured, disconnected")
 				ret := o.GetID()
 				if ret != nil {
-					exit <- 1
 					logger.Fatal(ret)
 				}
 			case gomegle.ERROR:
@@ -171,7 +160,6 @@ func main() {
 				time.Sleep(500 * time.Millisecond)
 				ret := o.GetID()
 				if ret != nil {
-					exit <- 1
 					logger.Fatal(ret)
 				}
 			case gomegle.SERVERMESSAGE:
