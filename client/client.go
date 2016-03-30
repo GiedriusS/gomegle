@@ -93,7 +93,7 @@ func main() {
 		}
 
 		for i := range st {
-			num, okInt := st[i].(int)
+			num, okEvent := st[i].(gomegle.Event)
 			status, okStatus := st[i].(gomegle.Status)
 
 			if okStatus {
@@ -102,7 +102,7 @@ func main() {
 				continue
 			}
 
-			if !okInt {
+			if !okEvent {
 				continue
 			}
 

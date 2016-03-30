@@ -32,24 +32,24 @@ const (
 
 // Types of events UpdateEvents() will return
 const (
-	WAITING          = iota // Waiting we get connected to a stranger/spyee or other session
-	CONNECTED               // We were connected to a session
-	DISCONNECTED            // We were disconnected from a session
-	TYPING                  // Stranger is typing
-	MESSAGE                 // Got a message from a stranger
-	ERROR                   // Some kind of error occured
-	STOPPEDTYPING           // Stranger stopped typing
-	IDENTDIGESTS            // Identification of the session
-	CONNECTIONDIED          // The connection has died unfortunately due to some reason :(
-	ANTINUDEBANNED          // You were banned due to "bad behaviour" in the chat
-	QUESTION                // Question in a spyee/spyer session
-	SPYTYPING               // Spyee 1 or 2 is typing
-	SPYSTOPPEDTYPING        // Spyee 1 or 2 has stopped typing
-	SPYDISCONNECTED         // Spyee 1 or 2 has disconnected
-	SPYMESSAGE              // Spyee 1 or 2 has sent a message
-	SERVERMESSAGE           // Some kind of server message
-	COUNT                   // Updated connection/online count
-	COMMONLIKES             // Shared topics between you and the stranger
+	WAITING          Event = iota // Waiting we get connected to a stranger/spyee or other session
+	CONNECTED                     // We were connected to a session
+	DISCONNECTED                  // We were disconnected from a session
+	TYPING                        // Stranger is typing
+	MESSAGE                       // Got a message from a stranger
+	ERROR                         // Some kind of error occured
+	STOPPEDTYPING                 // Stranger stopped typing
+	IDENTDIGESTS                  // Identification of the session
+	CONNECTIONDIED                // The connection has died unfortunately due to some reason :(
+	ANTINUDEBANNED                // You were banned due to "bad behaviour" in the chat
+	QUESTION                      // Question in a spyee/spyer session
+	SPYTYPING                     // Spyee 1 or 2 is typing
+	SPYSTOPPEDTYPING              // Spyee 1 or 2 has stopped typing
+	SPYDISCONNECTED               // Spyee 1 or 2 has disconnected
+	SPYMESSAGE                    // Spyee 1 or 2 has sent a message
+	SERVERMESSAGE                 // Some kind of server message
+	COUNT                         // Updated connection/online count
+	COMMONLIKES                   // Shared topics between you and the stranger
 	// If you get this you have to prove you're human by going to
 	// google.com/recaptcha/api/image?c=[challenge] and sending the answer with
 	// Recaptcha()
