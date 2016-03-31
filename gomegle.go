@@ -572,13 +572,13 @@ type Tp int
 // Available log entry types for Generate(). The parantheses next to the
 // constants show which arguments are used, if any.
 const (
-	DEF    = iota // smaller, bold font, gray (Arg1)
-	Q             // blue question box (Arg1)
-	STR           // large font, first item is red (Arg1)
-	STR1          // as above (Arg1)
-	STR2          // large font, first item is blue (Arg1)
-	YOU           // as above (Arg1)
-	NORMAL        // normal font, first item is bold (Arg1, Arg2)
+	DEF    Tp = iota // smaller, bold font, gray (Arg1)
+	Q                // blue question box (Arg1)
+	STR              // large font, first item is red (Arg1)
+	STR1             // as above (Arg1)
+	STR2             // large font, first item is blue (Arg1)
+	YOU              // as above (Arg1)
+	NORMAL           // normal font, first item is bold (Arg1, Arg2)
 )
 
 // LogEntry stores information needed for one entry
