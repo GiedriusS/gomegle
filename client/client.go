@@ -16,7 +16,6 @@ func messageListener(o *gomegle.Omegle, logger *log.Logger) {
 		err := o.ShowTyping()
 		if err != nil {
 			logger.Print(err)
-			continue
 		}
 
 		reader := bufio.NewReader(os.Stdin)
@@ -37,8 +36,8 @@ func messageListener(o *gomegle.Omegle, logger *log.Logger) {
 		err = o.StopTyping()
 		if err != nil {
 			logger.Print(err)
-			continue
 		}
+
 		err = o.SendMessage(text)
 		if err != nil {
 			logger.Fatal(err)
