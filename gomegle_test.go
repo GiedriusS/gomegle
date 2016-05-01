@@ -208,6 +208,8 @@ func TestGenerate(t *testing.T) {
 			if v == IDENTDIGESTS {
 				id = msg[k][0]
 				break
+			} else if v == ERROR {
+				t.Skip("error occured: ", msg[k][0])
 			}
 		}
 		tries++
@@ -263,6 +265,10 @@ func TestDifferentModes(t *testing.T) {
 	if err != nil {
 		t.Error("failed to get ID")
 	}
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
+	}
 	o.Wantsspy = false
 
 	o.Question = "Hello, world"
@@ -270,6 +276,10 @@ func TestDifferentModes(t *testing.T) {
 	err = o.GetID()
 	if err != nil {
 		t.Error("failed to get ID")
+	}
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
 	}
 	o.Question = ""
 	o.Cansavequestion = false
@@ -282,5 +292,9 @@ func TestDifferentModes(t *testing.T) {
 	err = o.GetID()
 	if err != nil {
 		t.Error("failed to get ID")
+	}
+	err = o.Disconnect()
+	if err != nil {
+		t.Error(err)
 	}
 }
