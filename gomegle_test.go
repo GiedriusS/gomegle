@@ -181,7 +181,7 @@ func TestRecaptcha(t *testing.T) {
 
 func TestGenerate(t *testing.T) {
 	var o Omegle
-	o.Topics = []string{"pizza"}
+
 	_, err := o.Generate("abcd1234", []LogEntry{})
 	if err == nil {
 		t.Error("expected err, got nil")
@@ -190,6 +190,7 @@ func TestGenerate(t *testing.T) {
 	if err == nil {
 		t.Error("expected err, got nil")
 	}
+
 	err = o.GetID()
 	if err != nil {
 		t.Error(err)
