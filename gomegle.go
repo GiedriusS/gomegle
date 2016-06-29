@@ -579,7 +579,6 @@ const (
 	STR2             // large font, first item is blue (Arg1)
 	YOU              // as above (Arg1)
 	NORMAL           // normal font, first item is bold (Arg1, Arg2)
-	DISC             // Stranger has disconnected
 )
 
 // LogEntry stores information needed for one entry
@@ -626,8 +625,6 @@ func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err
 			logsSlice = append(logsSlice, []string{"You:", val.Arg1})
 		case NORMAL:
 			logsSlice = append(logsSlice, []string{val.Arg1, val.Arg2})
-		case DISC:
-			logsSlice = append(logsSlice, []string{"Stranger has disconnected."})
 		default:
 			continue
 		}
