@@ -170,11 +170,9 @@ func main() {
 			case gomegle.PARTNERCOLLEGE:
 				fmt.Printf("%% Partner college: %s\n", msg[i][0])
 			case gomegle.COMMONLIKES:
-				j := 0
 				fmt.Printf("%% Shared topics:")
-				for j < len(msg[i]) {
+				for j := range msg[i] {
 					fmt.Printf(" %s", msg[i][j])
-					j++
 				}
 				fmt.Printf("\n")
 			}
