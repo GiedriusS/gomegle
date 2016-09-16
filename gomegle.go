@@ -132,10 +132,10 @@ func (o *Omegle) getID() (id string) {
 }
 
 // Send a POST request with specified parameters and values
-func postRequest(link string, parameters []string, values []string) (body string, err error) {
+func postRequest(link string, parameters map[string]string) (body string, err error) {
 	data := url.Values{}
-	for i := range parameters {
-		data.Set(parameters[i], values[i])
+	for k, v := range parameters {
+		data.Set(k, v)
 	}
 
 	resp, err := http.PostForm(link, data)
@@ -153,7 +153,7 @@ func postRequest(link string, parameters []string, values []string) (body string
 }
 
 // Send a GET request with specified parameters and values
-func getRequest(link string, parameters []string, values []string) (body string, err error) {
+func getRequest(link string, parameters map[string]string) (body string, err error) {
 	client := &http.Client{}
 
 	u, err := url.Parse(link)
@@ -162,8 +162,8 @@ func getRequest(link string, parameters []string, values []string) (body string,
 	}
 
 	query := u.Query()
-	for i := range parameters {
-		query.Set(parameters[i], values[i])
+	for k, v := range parameters {
+		query.Set(k, v)
 	}
 	u.RawQuery = query.Encode()
 
@@ -202,35 +202,32 @@ func (o *Omegle) generateRandID() {
 // Get a new ID but without any locking
 func (o *Omegle) getidUnlocked() (id string, err error) {
 	o.generateRandID()
-	params := []string{"lang", "group", "randid"}
-	args := []string{o.Lang, o.Group, o.randid}
+
+	params := map[string]string{}
+	params["lang"] = o.Lang
+	params["group"] = o.Group
+	params["randid"] = o.randid
 
 	if o.Wantsspy == true {
-		params = append(params, "wantsspy")
-		args = append(args, "1")
+		params["wantsspy"] = "1"
 	} else if o.Question != "" {
-		params = append(params, "ask")
-		args = append(args, o.Question)
+		params["ask"] = o.Question
 
 		if o.Cansavequestion == true {
-			params = append(params, "cansavequestion")
-			args = append(args, "1")
+			params["cansavequestion"] = "1"
 		}
 	} else if o.CollegeAuth != "" {
-		params = append(params, "college", "college_auth")
-		args = append(args, o.College, o.CollegeAuth)
+		params["college"] = o.College
+		params["college_auth"] = o.CollegeAuth
 		if o.AnyCollege == true {
-			params = append(params, "any_college")
-			args = append(args, "1")
+			params["any_college"] = "1"
 		}
 		b, err := json.Marshal(o.Topics)
 		if err != nil {
 			return "", err
 		}
 		if len(o.Topics) != 0 {
-			topics := string(b)
-			params = append(params, "topics")
-			args = append(args, topics)
+			params["topics"] = string(b)
 		}
 	} else {
 		b, err := json.Marshal(o.Topics)
@@ -238,13 +235,11 @@ func (o *Omegle) getidUnlocked() (id string, err error) {
 			return "", err
 		}
 		if len(o.Topics) != 0 {
-			topics := string(b)
-			params = append(params, "topics")
-			args = append(args, topics)
+			params["topics"] = string(b)
 		}
 	}
 
-	resp, err := getRequest(o.buildURL(startCmd), params, args)
+	resp, err := getRequest(o.buildURL(startCmd), params)
 	if err != nil {
 		return "", err
 	}
@@ -267,7 +262,7 @@ func (o *Omegle) ShowTyping() (err error) {
 		return &omegleErr{"ShowTyping", "id is empty", ""}
 	}
 
-	ret, err := postRequest(o.buildURL(typingCmd), []string{"id"}, []string{o.getID()})
+	ret, err := postRequest(o.buildURL(typingCmd), map[string]string{"id": o.getID()})
 	if ret != "win" {
 		return &omegleErr{"ShowTyping", "returned something other than win", ret}
 	}
@@ -280,7 +275,7 @@ func (o *Omegle) StopTyping() (err error) {
 		return &omegleErr{"StopTyping", "id is empty", ""}
 	}
 
-	ret, err := postRequest(o.buildURL(stoptypingCmd), []string{"id"}, []string{o.getID()})
+	ret, err := postRequest(o.buildURL(stoptypingCmd), map[string]string{"id": o.getID()})
 	if ret != "win" {
 		return &omegleErr{"StopTyping", "returned something other than win", ret}
 	}
@@ -292,7 +287,7 @@ func (o *Omegle) Disconnect() (err error) {
 	if o.getID() == "" {
 		return &omegleErr{"Disconnect", "id is empty", ""}
 	}
-	ret, err := postRequest(o.buildURL(disconnectCmd), []string{"id"}, []string{o.id})
+	ret, err := postRequest(o.buildURL(disconnectCmd), map[string]string{"id": o.id})
 
 	if err != nil {
 		return
@@ -313,7 +308,7 @@ func (o *Omegle) SendMessage(msg string) (err error) {
 		return &omegleErr{"SendMessage", "msg is empty", ""}
 	}
 
-	ret, err := postRequest(o.buildURL(sendCmd), []string{"id", "msg"}, []string{o.getID(), msg})
+	ret, err := postRequest(o.buildURL(sendCmd), map[string]string{"id": o.getID(), "msg": msg})
 	if err != nil {
 		return
 	}
@@ -330,7 +325,7 @@ func (o *Omegle) UpdateEvents() (st []interface{}, msg [][]string, err error) {
 		return st, [][]string{}, &omegleErr{"UpdateEvents", "id is empty", ""}
 	}
 
-	ret, err := postRequest(o.buildURL(eventCmd), []string{"id"}, []string{o.getID()})
+	ret, err := postRequest(o.buildURL(eventCmd), map[string]string{"id": o.getID()})
 	if err != nil {
 		return st, [][]string{}, err
 	}
@@ -528,7 +523,7 @@ func parseStatus(data map[string]interface{}) (st Status, err error) {
 // GetStatus gets status of omegle via http://[server].omegle.com/status
 func (o *Omegle) GetStatus() (st Status, err error) {
 	o.generateRandID()
-	resp, err := getRequest(o.buildURL(statusCmd), []string{"randid"}, []string{o.randid})
+	resp, err := getRequest(o.buildURL(statusCmd), map[string]string{"randid": o.randid})
 	if err != nil {
 		return Status{}, err
 	}
@@ -543,7 +538,7 @@ func (o *Omegle) StopLookingForCommonLikes() error {
 	if o.getID() == "" {
 		return &omegleErr{"StopLookingForCommonLikes", "id is empty", ""}
 	}
-	resp, err := postRequest(o.buildURL(stoplookingforcommonlikesCmd), []string{"id"}, []string{o.getID()})
+	resp, err := postRequest(o.buildURL(stoplookingforcommonlikesCmd), map[string]string{"id": o.getID()})
 	if err != nil {
 		return err
 	}
@@ -559,7 +554,7 @@ func (o *Omegle) Recaptcha(challenge, response string) error {
 	if o.getID() == "" {
 		return &omegleErr{"Recaptcha", "id is empty", ""}
 	}
-	resp, err := postRequest(o.buildURL(recaptchaCmd), []string{"id", "challenge", "response"}, []string{o.getID(), challenge, response})
+	resp, err := postRequest(o.buildURL(recaptchaCmd), map[string]string{"id": o.getID(), "challenge": challenge, "response": response})
 	if resp == "fail" {
 		return &omegleErr{"Recaptcha", "returned \"fail\", expected something else", resp}
 	}
@@ -596,16 +591,18 @@ func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err
 		return "", &omegleErr{"Generate", "no conversation has been started (id == \"\")", ""}
 	}
 	o.generateRandID()
-	params := []string{"randid", "identdigests", "host"}
-	args := []string{o.randid, identdigests, "1"}
+
+	params := map[string]string{}
+	params["randid"] = o.randid
+	params["identdigests"] = identdigests
+	params["host"] = "1"
 
 	if len(o.Topics) != 0 {
 		b, err := json.Marshal(o.Topics)
 		if err != nil {
 			return "", err
 		}
-		params = append(params, "topics")
-		args = append(args, string(b))
+		params["topics"] = string(b)
 	}
 
 	logsSlice := [][]string{}
@@ -634,10 +631,9 @@ func (o *Omegle) Generate(identdigests string, logs []LogEntry) (url string, err
 	if err != nil {
 		return "", err
 	}
-	params = append(params, "log")
-	args = append(args, string(logsStr))
+	params["log"] = string(logsStr)
 
-	resp, err := postRequest("http://logs.omegle.com/"+generateCmd, params, args)
+	resp, err := postRequest("http://logs.omegle.com/"+generateCmd, params)
 	if err != nil {
 		return "", err
 	}
